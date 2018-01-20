@@ -1,0 +1,12 @@
+{
+  "type": "service_account",
+  "project_id": "food-finder-1479473622736",
+  "private_key_id": "9045a13842f1fa1d5f744d668c4b0cdfa977d3ae",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCwK+pnRcdNJWEh\nIocu2N0tKP8xrWI7iklb16BCQcSaE50+Y9MtVPWJ9Vd7naNigZs/SNaNVq+91oRj\noSaajX5h2GM/GIsimg28RH9Qy0gkG7/1aVmKSY8aKrBk29y0Rec7nShHktNxthCX\nbzyHPyOj5LRL06FMaCF3tFZ5UFD/21Vulo9sT+Cz09CogEzJpgZqOzFSdzvmeEjj\nQXLQGT7LkCjB2KIQsiWmsCcvBHSBsQHLvdQW78Skv9UyWgzxM+E/Ju0108K7Lp/m\nigLmHpIlWM0XGhWNo+WwlQpU+OsSwNaQHCBvzNYMtqaDCw5UqI3RuQdnxz7Gq8G/\nrHtw967RAgMBAAECggEAPZyeNc/pi8lu1q/Ep1WgxJJ57V295STP0xbuLT3jDB+f\n9pni2Q/Fb6ImHk1bPrAlI1TN9FBE1heX5WAOqC6j7IRI8WAcCNXnx9gMzqzJZhdu\nYt2dOwfOzE/xsNRTs5he7jJgS+fFmxcZZly4xnQGeuMZSwuQdbBVRBAFzheQvGnc\nObGtZ+WyRn8JHxGND6BuQkO8keWDo9FVQNFnVpiDxwkSZyCImROsgwu39qeq7RLx\nk7RVjLNJ/XxggPbfE2RPfj0obQYazuEsfcSnKaOFaZzGTovpXA2Fqr4beE1xkdXQ\nfFiPjFukeLZW3kWZ49SfIcsvUs89DvmHG528+wHJIQKBgQDZWme18TLmuQn+eav1\nfdvYAiFxJ4TSg3bbxJH/zOHii9q28IxYfZ4+I9AVsdxz7qfL3XPGj3j2iOGtXJdd\nCJVePjlAesn4y3utZoQ37qnGlmGq+DSaACW97VrqlLCWfZbP6ecQLSwLG4hMup5W\n5iPtEviTyjuxGqnAf0FksueHBwKBgQDPfvwbOmLTx04/kuBbkmhcqXxSSdcYxjj+\nHioKpZMZxjjeYXul8ug8rh7C64NN/daP1hj7vHEZ32Sn/6y0noG1Glep768vefmW\nvryOfiwpJPd92bYgO6gh851qpdLPAY7Kqxwt9dZOgyeQgW1t92zqeufvCTusEoNS\nas62UiMNZwKBgGQHYC1ymLtoMzpDIqlzR8bsjBl4V39Oc1gG6i4wS1Cojnqcz+o1\nvarZbn1dgph0IBMJkquyAbhsHHhdYWe2eI+L0WtkVylB9GREBtt64fV75ez6F7M8\nGCKFZs8IqRBJMivzeJyQPXHLNPoi9JYHikcj8PSLINeL7s2hgyXl0/nnAoGBAK6y\n0XvzOoXoBj+MYA15RRjPMfbuaIVZT17U8ryoDyPiOrsxBDQCQfnk981REOo3T9Em\nhz5buDX6WfsATt57neVm2mwfezXT0opS6Npn7LJvh1iUVrzovXRoch76onTbcOe+\nDSm9E8RitIr8DbBKY49AD8q30V/c7mgTuRrUKOL9AoGAU/AKyq/3qil1n4EselMX\n7p2DmyzmPfFvMlRoWxfCYuEv4ebHJaeWyuAjYApMJTxPH4WKI9QHjzd22+cYLkJ0\nS/gwAbYQqEjUQyCZ2Utz1se9edZi3otPs1oTU8fmdW5+gMCozYOyUWa06ZazLiH8\nOJWH9kCIq9B9h0mxBFu+NWg=\n-----END PRIVATE KEY-----\n",
+  "client_email": "imran-603@food-finder-1479473622736.iam.gserviceaccount.com",
+  "client_id": "115508514364031943360",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://accounts.google.com/o/oauth2/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/imran-603%40food-finder-1479473622736.iam.gserviceaccount.com"
+}
