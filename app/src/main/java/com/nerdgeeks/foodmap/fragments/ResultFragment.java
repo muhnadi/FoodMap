@@ -8,6 +8,7 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -85,6 +86,7 @@ public class ResultFragment extends Fragment implements
     private double lat, lng;
     private String mAddressOutput;
     private View snackView;
+    private ArrayList<String> placeId = new ArrayList<>();
 
     public ResultFragment() {
         // Required empty public constructor
@@ -106,8 +108,17 @@ public class ResultFragment extends Fragment implements
         }
     }
 
+    private Context mContext;
+
+    // Initialise it from onAttach()
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        mContext = context;
+    }
+
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View rootView = inflater.inflate(R.layout.fragment_list, container, false);
@@ -117,7 +128,7 @@ public class ResultFragment extends Fragment implements
         isConnected = ConnectivityReceiver.isConnected();
         isGPSEnabled = ConnectivityReceiver.isGPSConnected();
 
-        myPref = getActivity().getApplicationContext().getSharedPreferences("MyPref", Context.MODE_PRIVATE);
+        myPref = mContext.getSharedPreferences("MyPref", Context.MODE_PRIVATE);
 
         boolean isContain = myPref.contains("lat");
 
@@ -225,6 +236,7 @@ public class ResultFragment extends Fragment implements
                                     //id = place.getString(ID);
 
                                     place_id = place.getString(PLACE_ID);
+                                    placeId.add(place_id);
                                     mapModel.setId(place_id);
 
                                     if (!place.isNull(NAME)) {
@@ -313,7 +325,7 @@ public class ResultFragment extends Fragment implements
                     public void onResponse(JSONObject result) {
                         Log.i(TAG, "onResponse: Result= " + result.toString());
 
-                        String id, place_id, placeName = null, icon, vicinity = null, open, rating;
+                        String id, placeName = null, icon, vicinity = null, open, rating;
                         double latitude, longitude;
                         int position = mapAdapter.getItemCount();
 
@@ -329,8 +341,9 @@ public class ResultFragment extends Fragment implements
                                     PlaceDeatilsModel mapModel1 = new PlaceDeatilsModel();
                                     //id = place.getString(ID);
 
-                                    place_id = place.getString(PLACE_ID);
-                                    mapModel1.setId(place_id);
+                                    id = place.getString(PLACE_ID);
+                                    placeId.add(id);
+                                    mapModel1.setId(id);
 
                                     if (!place.isNull(NAME)) {
                                         placeName = place.getString(NAME);
@@ -365,7 +378,6 @@ public class ResultFragment extends Fragment implements
                                     mapAdapter.AddItems(position++, mapModel1);
                                 }
                                 mapAdapter.notifyDataSetChanged();
-                                nextPageLoad(nextPageToken);
                                 Toast.makeText(getActivity(), "Got " + mapAdapter.getItemCount() + " Results", Toast.LENGTH_SHORT).show();
                                 Log.e(TAG, "Next Page:" + googlePlacesUrl);
                             } else if (result.getString("status").equalsIgnoreCase("ZERO_RESULTS")) {
@@ -402,11 +414,10 @@ public class ResultFragment extends Fragment implements
             }
             Intent detailIntent = new Intent(getActivity(), InfoActivity.class);
             detailIntent.putExtra("position", position);
-            detailIntent.putExtra("placeId", prefManager.readData().get(position).getId());
+            detailIntent.putExtra("placeId", placeId.get(position));
             detailIntent.putExtra("lat", lat);
             detailIntent.putExtra("lng", lng);
             startActivity(detailIntent);
-            getActivity().overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_right);
 
         }
     };

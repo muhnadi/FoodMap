@@ -34,7 +34,7 @@ public final class AppConfig {
     public static final String POINTS = "points";
 
     public static final String GOOGLE_MAP_API_KEY =
-            "AIzaSyAbNDLy8J2oefyHeY-47pFrtU8EQl1Q04g";
+            "AIzaSyCwTM50I3Hziu6Vyzf7WJnC9t1zjVCGe_c";
     public static final int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
     public static final int REQUEST_CHECK_SETTINGS = 0x1;
     public static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;

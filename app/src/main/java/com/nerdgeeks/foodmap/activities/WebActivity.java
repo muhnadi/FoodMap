@@ -108,7 +108,6 @@ public class WebActivity extends AppCompatActivity {
         } else {
             // Let the system handle the back button
             super.onBackPressed();
-            overridePendingTransition(R.anim.anim_enter,R.anim.anim_leave);
             finish();
         }
     }

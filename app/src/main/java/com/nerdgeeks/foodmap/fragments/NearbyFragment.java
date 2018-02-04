@@ -1,17 +1,22 @@
 package com.nerdgeeks.foodmap.fragments;
 
 
+import android.Manifest;
 import android.app.ProgressDialog;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.graphics.drawable.BitmapDrawable;
+import android.location.Location;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -25,10 +30,12 @@ import android.widget.Toast;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
+import com.google.android.gms.location.DetectedActivity;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
@@ -45,6 +52,16 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.net.ConnectException;
+import java.util.ArrayList;
+
+import io.nlopez.smartlocation.OnActivityUpdatedListener;
+import io.nlopez.smartlocation.OnGeofencingTransitionListener;
+import io.nlopez.smartlocation.OnLocationUpdatedListener;
+import io.nlopez.smartlocation.SmartLocation;
+import io.nlopez.smartlocation.geofencing.utils.TransitionGeofence;
+import io.nlopez.smartlocation.location.config.LocationAccuracy;
+import io.nlopez.smartlocation.location.config.LocationParams;
+import io.nlopez.smartlocation.location.providers.LocationGooglePlayServicesProvider;
 
 import static com.nerdgeeks.foodmap.app.AppConfig.GEOMETRY;
 import static com.nerdgeeks.foodmap.app.AppConfig.GOOGLE_MAP_API_KEY;
@@ -58,6 +75,7 @@ import static com.nerdgeeks.foodmap.app.AppConfig.NAME;
 import static com.nerdgeeks.foodmap.app.AppConfig.NEXT_PAGE_TOKEN;
 import static com.nerdgeeks.foodmap.app.AppConfig.NO_RESULTS;
 import static com.nerdgeeks.foodmap.app.AppConfig.OK;
+import static com.nerdgeeks.foodmap.app.AppConfig.PLACE_ID;
 import static com.nerdgeeks.foodmap.app.AppConfig.RATE;
 import static com.nerdgeeks.foodmap.app.AppConfig.RESULTS;
 import static com.nerdgeeks.foodmap.app.AppConfig.STATUS;
@@ -72,7 +90,8 @@ import static com.nerdgeeks.foodmap.app.AppConfig.ZERO_RESULTS;
  */
 public class NearbyFragment extends Fragment implements OnMapReadyCallback,
         ConnectivityReceiver.ConnectivityReceiverListener, ConnectivityReceiver.GpsStatusReceiverListener,
-        GoogleMap.OnInfoWindowClickListener, GoogleMap.InfoWindowAdapter {
+        GoogleMap.OnInfoWindowClickListener, GoogleMap.InfoWindowAdapter,
+        OnLocationUpdatedListener, OnGeofencingTransitionListener {
 
     private static final String ARG_PARAM1 = "param1";
     private String mParam1;
@@ -88,6 +107,13 @@ public class NearbyFragment extends Fragment implements OnMapReadyCallback,
     private View snackView;
     private Typeface ThemeFont;
 
+    private LocationGooglePlayServicesProvider provider;
+    private static final int LOCATION_PERMISSION_ID = 1001;
+    private Location lastLocation;
+    private ArrayList<String> placeId = new ArrayList<>();
+    private Bitmap smallMarker;
+    private SmartLocation smartLocation;
+
 
     public NearbyFragment() {
         // Required empty public constructor
@@ -101,6 +127,15 @@ public class NearbyFragment extends Fragment implements OnMapReadyCallback,
         return fragment;
     }
 
+    private Context mContext;
+
+    // Initialise it from onAttach()
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        mContext = context;
+    }
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -110,12 +145,10 @@ public class NearbyFragment extends Fragment implements OnMapReadyCallback,
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View rootView = inflater.inflate(R.layout.fragment_nearby, container, false);
-
-        ThemeFont = Typeface.createFromAsset(getActivity().getAssets(), "fonts/HelveticaNeue.ttf");
 
         snackView = rootView.findViewById(R.id.fragment_nearby);
         prefManager = new PrefManager(getContext());
@@ -127,7 +160,7 @@ public class NearbyFragment extends Fragment implements OnMapReadyCallback,
         isConnected = ConnectivityReceiver.isConnected();
         isGPSEnabled = ConnectivityReceiver.isGPSConnected();
 
-        myPref = getActivity().getApplicationContext().getSharedPreferences("MyPref", Context.MODE_PRIVATE);
+        myPref = mContext.getSharedPreferences("MyPref", Context.MODE_PRIVATE);
 
         isContain = myPref.contains("lat");
 
@@ -156,27 +189,81 @@ public class NearbyFragment extends Fragment implements OnMapReadyCallback,
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
-        try{
-            if (isConnected && isGPSEnabled){
-                buildMapUI(mMap, true);
-            } else if (isGPSEnabled) {
-                if (prefManager.isPrefAvailable()){
-                    buildMapUI(mMap, false);
-                } else {
-                    showSnackMessage(INTERNET_ERROR);
-                }
-            } else if (isConnected) {
-                buildMapUI(mMap, true);
-            } else {
-                if (prefManager.isPrefAvailable()){
-                    buildMapUI(mMap, false);
-                } else {
-                    showSnackMessage(INTERNET_ERROR);
-                }
-            }
-        } catch (Exception ex){
-            showSnackMessage(ex.getMessage());
+        int height = 72;
+        int width = 72;
+        BitmapDrawable bitmapdraw=(BitmapDrawable)getResources().getDrawable(R.drawable.ic_marker);
+        Bitmap b = bitmapdraw.getBitmap();
+        smallMarker = Bitmap.createScaledBitmap(b, width, height, false);
+
+        if (ContextCompat.checkSelfPermission(mContext,
+                Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_ID);
+        } else {
+            startLocation();
         }
+    }
+
+    private void startLocation() {
+
+        long mLocTrackingInterval = 1000 * 5; // 5 sec
+        float trackingDistance = 0;
+        LocationAccuracy trackingAccuracy = LocationAccuracy.HIGH;
+
+        LocationParams.Builder builder = new LocationParams.Builder()
+                .setAccuracy(trackingAccuracy)
+                .setDistance(trackingDistance)
+                .setInterval(mLocTrackingInterval);
+
+        provider = new LocationGooglePlayServicesProvider();
+        provider.setCheckLocationSettings(true);
+        smartLocation = new SmartLocation.Builder(mContext).logging(true).build();
+        smartLocation.location(provider).continuous().config(builder.build()).start(this);
+
+        showLast();
+    }
+
+    private void showLast() {
+        lastLocation = SmartLocation.with(getContext()).location().getLastLocation();
+        if (lastLocation != null) {
+            try{
+                if (isConnected ){
+                    buildMapUI(mMap, true);
+                } else {
+                    if (prefManager.isPrefAvailable()){
+                        buildMapUI(mMap, false);
+                    } else {
+                        showSnackMessage(INTERNET_ERROR);
+                    }
+                }
+            } catch (Exception ex){
+                showSnackMessage(ex.getMessage());
+            }
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (requestCode == LOCATION_PERMISSION_ID && grantResults.length > 0
+                && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            startLocation();
+        }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (provider != null) {
+            provider.onActivityResult(requestCode, resultCode, data);
+        }
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        smartLocation.location().stop();
+        SmartLocation.with(mContext).location(provider).stop();
+        SmartLocation.with(mContext).geocoding().stop();
     }
 
     @Override
@@ -195,15 +282,15 @@ public class NearbyFragment extends Fragment implements OnMapReadyCallback,
     private void buildMapUI(GoogleMap map, boolean isNetwork){
         //zoom to current position:
         CameraPosition cameraPosition = new CameraPosition.Builder()
-                .target(new LatLng(lat,lng)).zoom(17).build();
+                .target(new LatLng(lastLocation.getLatitude(),lastLocation.getLongitude())).zoom(17).build();
 
-        mMap.animateCamera(CameraUpdateFactory
+        map.animateCamera(CameraUpdateFactory
                 .newCameraPosition(cameraPosition));
-        mMap.setInfoWindowAdapter(NearbyFragment.this);
+        map.setInfoWindowAdapter(NearbyFragment.this);
 
         if (isNetwork){
             map.setOnInfoWindowClickListener(this);
-            loadNearByPlaces(lat, lng, mParam1);
+            loadNearByPlaces(lastLocation.getLatitude(), lastLocation.getLongitude(), mParam1);
         } else {
             for (int i=0; i<prefManager.readData().size(); i++){
                 MarkerOptions markerOptions = new MarkerOptions();
@@ -213,6 +300,7 @@ public class NearbyFragment extends Fragment implements OnMapReadyCallback,
                 markerOptions.snippet(prefManager.readData().get(i).getResVicnity() + "\nRatings : " + prefManager.readData().get(i).getResRating());
 
                 Marker marker = mMap.addMarker(markerOptions);
+                marker.setIcon(BitmapDescriptorFactory.fromBitmap(smallMarker));
                 marker.showInfoWindow();
             }
         }
@@ -263,7 +351,8 @@ public class NearbyFragment extends Fragment implements OnMapReadyCallback,
                                 for (int i = 0; i < jsonArray.length(); i++) {
                                     JSONObject place = jsonArray.getJSONObject(i);
                                     //id = place.getString(ID);
-                                    //place_id = place.getString(PLACE_ID);
+                                    place_id = place.getString(PLACE_ID);
+                                    placeId.add(place_id);
 
                                     if (!place.isNull(NAME)) {
                                         placeName = place.getString(NAME);
@@ -290,6 +379,7 @@ public class NearbyFragment extends Fragment implements OnMapReadyCallback,
                                     mMap.setInfoWindowAdapter(NearbyFragment.this);
 
                                     Marker marker = mMap.addMarker(markerOptions);
+                                    marker.setIcon(BitmapDescriptorFactory.fromBitmap(smallMarker));
                                     marker.showInfoWindow();
                                 }
                                 pDialog.dismiss();
@@ -331,7 +421,7 @@ public class NearbyFragment extends Fragment implements OnMapReadyCallback,
                     public void onResponse(JSONObject result) {
                         Log.i(TAG, "onResponse: Result= " + result.toString());
 
-                        String placeName = null, vicinity = null, rating = null;
+                        String placeName = null, place_id, vicinity = null, rating = null;
                         double latitude, longitude;
 
                         try {
@@ -346,6 +436,10 @@ public class NearbyFragment extends Fragment implements OnMapReadyCallback,
                                     if (!place.isNull(NAME)) {
                                         placeName = place.getString(NAME);
                                     }
+
+                                    place_id = place.getString(PLACE_ID);
+                                    placeId.add(place_id);
+
                                     if (!place.isNull(VICINITY)) {
                                         vicinity = place.getString(VICINITY);
                                     }
@@ -367,6 +461,7 @@ public class NearbyFragment extends Fragment implements OnMapReadyCallback,
                                     mMap.setInfoWindowAdapter(NearbyFragment.this);
 
                                     Marker marker = mMap.addMarker(markerOptions);
+                                    marker.setIcon(BitmapDescriptorFactory.fromBitmap(smallMarker));
                                     marker.showInfoWindow();
                                 }
                                 Log.e(TAG, "Next Page:" + googlePlacesUrl);
@@ -407,11 +502,10 @@ public class NearbyFragment extends Fragment implements OnMapReadyCallback,
         int position = Integer.parseInt(marker.getId().replace("m", ""));
         Intent detailIntent = new Intent(getActivity(), InfoActivity.class);
         detailIntent.putExtra("position", position);
-        detailIntent.putExtra("placeId", prefManager.readData().get(position).getId());
+        detailIntent.putExtra("placeId", placeId.get(position));
         detailIntent.putExtra("lat", lat);
         detailIntent.putExtra("lng", lng);
         startActivity(detailIntent);
-        getActivity().overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_right);
     }
 
     @Override
@@ -435,5 +529,15 @@ public class NearbyFragment extends Fragment implements OnMapReadyCallback,
         roundTile.setTypeface(ThemeFont);
 
         return info;
+    }
+
+    @Override
+    public void onGeofenceTransition(TransitionGeofence transitionGeofence) {
+
+    }
+
+    @Override
+    public void onLocationUpdated(Location location) {
+
     }
 }

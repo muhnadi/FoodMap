@@ -2,16 +2,20 @@ package com.nerdgeeks.foodmap.activities;
 
 import android.Manifest;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Typeface;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomSheetBehavior;
+import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -22,6 +26,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.RatingBar;
 import android.widget.TextView;
@@ -52,6 +57,8 @@ import java.util.List;
 import it.neokree.materialtabs.MaterialTab;
 import it.neokree.materialtabs.MaterialTabHost;
 import it.neokree.materialtabs.MaterialTabListener;
+import uk.co.chrisjenx.calligraphy.CalligraphyConfig;
+import uk.co.chrisjenx.calligraphy.CalligraphyContextWrapper;
 
 import static com.nerdgeeks.foodmap.app.AppConfig.*;
 
@@ -73,8 +80,22 @@ public class InfoActivity extends AppCompatActivity implements MaterialTabListen
     private int[] icon = {R.drawable.ic_map, R.drawable.ic_landscape, R.drawable.ic_feedback};
 
     @Override
+    protected void attachBaseContext(Context newBase) {
+        super.attachBaseContext(CalligraphyContextWrapper.wrap(newBase));
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        CalligraphyConfig.initDefault(new CalligraphyConfig.Builder()
+                .setDefaultFontPath("fonts/HelveticaNeue.ttf")
+                .setFontAttrId(R.attr.fontPath)
+                .build());
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+            getWindow().setStatusBarColor(ContextCompat.getColor(this, R.color.colorPrimaryDark));
+        }
         setContentView(R.layout.activity_info);
 
         final Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -96,9 +117,6 @@ public class InfoActivity extends AppCompatActivity implements MaterialTabListen
         Latitude = String.valueOf(latitude);
         Longitude = String.valueOf(longitude);
 
-        //adding custom font
-        final Typeface ThemeFont = Typeface.createFromAsset(getAssets(),"fonts/HelveticaNeue.ttf");
-
         progressDialog = new ProgressDialog(this);
         progressDialog.setMessage("Loading...");
 
@@ -117,15 +135,6 @@ public class InfoActivity extends AppCompatActivity implements MaterialTabListen
         mWeb = (TextView) findViewById(R.id.nWeb);
         mTime = (TextView) findViewById(R.id.nTime);
         mDistance = (TextView) findViewById(R.id.nDistance);
-
-        mName.setTypeface(ThemeFont);
-        mVicnity.setTypeface(ThemeFont);
-        mOpen.setTypeface(ThemeFont);
-        mRate.setTypeface(ThemeFont);
-        mPhone.setTypeface(ThemeFont);
-        mWeb.setTypeface(ThemeFont);
-        mTime.setTypeface(ThemeFont);
-        mDistance.setTypeface(ThemeFont);
 
         ratingBar = (RatingBar) findViewById(R.id.rateBar);
         viewPager = (ViewPager) findViewById(R.id.viewPager);
@@ -169,13 +178,14 @@ public class InfoActivity extends AppCompatActivity implements MaterialTabListen
                         Intent intent = getIntent();
                         intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
                         finish();
-                        overridePendingTransition(R.anim.anim_enter, R.anim.anim_leave);
                         startActivity(intent);
                     }
                 }, 700);
 
             }
         });
+
+        //final CoordinatorLayout layout = findViewById(R.id.activity_info);
 
         View llBottomSheet = findViewById(R.id.card);
 
@@ -198,6 +208,7 @@ public class InfoActivity extends AppCompatActivity implements MaterialTabListen
 
             @Override
             public void onSlide(@NonNull View bottomSheet, float slideOffset) {
+                viewPager.animate().translationY(1 - slideOffset).setDuration(0).start();
             }
         });
     }
@@ -205,7 +216,6 @@ public class InfoActivity extends AppCompatActivity implements MaterialTabListen
     @Override
     public boolean onSupportNavigateUp() {
         super.onBackPressed();
-        overridePendingTransition(R.anim.anim_enter, R.anim.anim_leave);
         finish();
         return true;
     }
@@ -287,7 +297,6 @@ public class InfoActivity extends AppCompatActivity implements MaterialTabListen
                                             Intent urlIntent = new Intent(InfoActivity.this, WebActivity.class);
                                             urlIntent.putExtra("url", web);
                                             startActivity(urlIntent);
-                                            overridePendingTransition(R.anim.anim_enter, R.anim.anim_leave);
                                         }
                                     });
                                 } else {
@@ -399,7 +408,6 @@ public class InfoActivity extends AppCompatActivity implements MaterialTabListen
 
     public void onBackPressed() {
         super.onBackPressed();
-        overridePendingTransition(R.anim.anim_enter, R.anim.anim_leave);
         finish();
     }
 
@@ -434,7 +442,6 @@ public class InfoActivity extends AppCompatActivity implements MaterialTabListen
             Intent mapUrlIntent = new Intent(InfoActivity.this, WebActivity.class);
             mapUrlIntent.putExtra("url", url);
             startActivity(mapUrlIntent);
-            overridePendingTransition(R.anim.anim_enter, R.anim.anim_leave);
         }else {
             new AlertDialog.Builder(InfoActivity.this)
                     .setIcon(R.drawable.ic_map_grey)
@@ -485,7 +492,6 @@ public class InfoActivity extends AppCompatActivity implements MaterialTabListen
             Intent urlIntent = new Intent(InfoActivity.this, WebActivity.class);
             urlIntent.putExtra("url", webUrl);
             startActivity(urlIntent);
-            overridePendingTransition(R.anim.anim_enter, R.anim.anim_leave);
         } else {
             new AlertDialog.Builder(InfoActivity.this)
                     .setIcon(R.drawable.ic_web_grey)

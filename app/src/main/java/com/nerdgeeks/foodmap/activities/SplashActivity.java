@@ -1,6 +1,7 @@
 package com.nerdgeeks.foodmap.activities;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Typeface;
 import android.os.Bundle;
@@ -16,21 +17,29 @@ import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.InterstitialAd;
 import com.nerdgeeks.foodmap.R;
 
+import uk.co.chrisjenx.calligraphy.CalligraphyConfig;
+import uk.co.chrisjenx.calligraphy.CalligraphyContextWrapper;
+
 public class SplashActivity extends Activity {
 
     private InterstitialAd interstitialAd;
 
     @Override
+    protected void attachBaseContext(Context newBase) {
+        super.attachBaseContext(CalligraphyContextWrapper.wrap(newBase));
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        CalligraphyConfig.initDefault(new CalligraphyConfig.Builder()
+                .setDefaultFontPath("fonts/HelveticaNeue.ttf")
+                .setFontAttrId(R.attr.fontPath)
+                .build());
         setContentView(R.layout.activity_splash);
-
-        //adding custom font
-        final Typeface ThemeFont = Typeface.createFromAsset(getAssets(), "fonts/HelveticaNeue.ttf");
 
         View mSplashImage = findViewById(R.id.splash);
         TextView mSplashText = (TextView) findViewById(R.id.splashText);
-        mSplashText.setTypeface(ThemeFont);
         Animation splashAnimImage = AnimationUtils.loadAnimation(this, R.anim.splash_anim_img);
         Animation splashAnimText = AnimationUtils.loadAnimation(this, R.anim.splash_anim);
         mSplashText.startAnimation(splashAnimText);
@@ -41,10 +50,9 @@ public class SplashActivity extends Activity {
             @Override
             public void run() {
                 startActivity(new Intent(SplashActivity.this, MapsActivity.class));
-                overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_right);
                 finish();
-                launchInterstitial();
-                loadInterstitial();
+                //launchInterstitial();
+                //loadInterstitial();
 
             }
         }, SPLASH_DISPLAY_LENGTH);

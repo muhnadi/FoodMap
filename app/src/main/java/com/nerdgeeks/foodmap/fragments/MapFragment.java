@@ -2,8 +2,10 @@ package com.nerdgeeks.foodmap.fragments;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.Fragment;
@@ -71,6 +73,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, GoogleM
     private double lat,lng;
     private String mAddressOutput;
     private Typeface ThemeFont;
+    private Bitmap smallMarker;
 
     public MapFragment() {
         // Required empty public constructor
@@ -132,6 +135,11 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, GoogleM
     public void onMapReady(GoogleMap googleMap) {
         gMap = googleMap;
         gMap.setInfoWindowAdapter(this);
+        int height = 72;
+        int width = 72;
+        BitmapDrawable bitmapdraw=(BitmapDrawable)getResources().getDrawable(R.drawable.ic_marker);
+        Bitmap b = bitmapdraw.getBitmap();
+        smallMarker = Bitmap.createScaledBitmap(b, width, height, false);
         LoadInformation(mParam1);
     }
 
@@ -192,33 +200,24 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, GoogleM
         double srcLat = Double.valueOf(mParam2);
         double srcLng = Double.valueOf(mParam3);
 
-        currentLocationMarker =
-                gMap.addMarker(
-                        new MarkerOptions().position(
-                                new LatLng(lat,lng))
-                                .title(mAddressOutput)
-                                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA)));
-        currentLocationMarker.showInfoWindow();
+        gMap.addMarker(
+                new MarkerOptions().position(
+                        new LatLng(lat,lng))
+                        .title(mAddressOutput)
+                        .icon(BitmapDescriptorFactory.fromBitmap(smallMarker)));
 
         Marker desMarker = gMap.addMarker(new MarkerOptions().position(latLng).title(name));
+        desMarker.setIcon(BitmapDescriptorFactory.fromBitmap(smallMarker));
         desMarker.showInfoWindow();
 
         gMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(srcLat,srcLng), 17));
         gMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 17));
         gMap.animateCamera(CameraUpdateFactory.zoomTo(17));
 
-        getRoutes(new LatLng(srcLat,srcLng),latLng,0);
-
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                currentLocationMarker.remove();
-                getRoutes(new LatLng(lat,lng),latLng,1);
-            }
-        }, 1000);
+        getRoutes(new LatLng(srcLat,srcLng),latLng);
     }
 
-    private void getRoutes(LatLng origin, final LatLng destination, int flag){
+    private void getRoutes(LatLng origin, final LatLng destination){
         String apiMapUrl = "http://maps.googleapis.com/maps/api/directions/json?"
                 + "origin=" + origin.latitude
                 + "," + origin.longitude
@@ -229,9 +228,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, GoogleM
                 + "&mode=walking";
 
         final List<List<HashMap<String, String>>> routes = new ArrayList<>() ;
-
-        if (flag == 1)
-            routes.clear();
 
         JsonObjectRequest request = new JsonObjectRequest(apiMapUrl,
 
@@ -302,14 +298,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, GoogleM
                 });
 
         AppController.getInstance().addToRequestQueue(request);
-
-        currentLocationMarker =
-                gMap.addMarker(
-                        new MarkerOptions().position(
-                                new LatLng(lat,lng))
-                                .title(mAddressOutput)
-                                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA)));
-        currentLocationMarker.showInfoWindow();
     }
 
     private List<LatLng> decodePoly(String encoded) {
@@ -362,7 +350,11 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, GoogleM
 //        snippet.setTypeface(ThemeFont);
 
         TextView roundTile = (TextView) info.findViewById(R.id.msg_thumb);
-        roundTile.setText(String.valueOf(marker.getTitle().charAt(0)));
+        try {
+            roundTile.setText(String.valueOf(marker.getTitle().charAt(0)));
+        } catch (StringIndexOutOfBoundsException ex){
+            ex.printStackTrace();
+        }
         roundTile.setTypeface(ThemeFont);
 
         return info;

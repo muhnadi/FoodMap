@@ -54,7 +54,6 @@ public class FullImageActivity extends AppCompatActivity {
 
     public void onBackPressed() {
         super.onBackPressed();
-        overridePendingTransition(R.anim.anim_enter, R.anim.anim_leave);
         finish();
     }
 }

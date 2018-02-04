@@ -159,7 +159,6 @@ public class PhotosFragment extends Fragment {
             detailIntent.putExtra("pos", position);
             detailIntent.putExtra("arrayList",arrayPhotos);
             startActivity(detailIntent);
-            getActivity().overridePendingTransition(R.anim.anim_enter, R.anim.anim_leave);
 
         }
     };
