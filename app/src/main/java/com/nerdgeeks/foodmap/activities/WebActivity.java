@@ -20,49 +20,41 @@ public class WebActivity extends AppCompatActivity {
 
     private WebView browser;
     private ProgressDialog progressDialog;
-    InterstitialAd interstitialAd;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_web);
 
-        AdView mAdView = (AdView) findViewById(R.id.adView);
+        AdView mAdView = findViewById(R.id.adView);
         AdRequest adRequest = new AdRequest.Builder()
                 .build();
         mAdView.loadAd(adRequest);
 
-        launchInter();
-        loadInterstitial();
+        new Handler().postDelayed(() -> SplashActivity.interstitialAd.show(),10000);
 
         //get String by Data Passing
         String URL = getIntent().getStringExtra("url");
 
         //Initializing WebView
-        browser = (WebView) findViewById(R.id.mWebView);
+        browser = findViewById(R.id.mWebView);
         browser.getSettings().setJavaScriptEnabled(true);
 
         //Load URL on WebView
         startWebView(URL);
 
         //Adding Fab Button
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                new Handler().postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        progressDialog = new ProgressDialog(WebActivity.this);
-                        progressDialog.setMessage("Loading...");
-                        progressDialog.setIndeterminate(false);
-                        progressDialog.show();
-                        progressDialog.setCanceledOnTouchOutside(false);
-                        browser.reload();
-                    }
-                }, 700);
-                progressDialog.dismiss();
-            }
+        FloatingActionButton fab = findViewById(R.id.fab);
+        fab.setOnClickListener(view -> {
+            new Handler().postDelayed(() -> {
+                progressDialog = new ProgressDialog(WebActivity.this);
+                progressDialog.setMessage("Loading...");
+                progressDialog.setIndeterminate(false);
+                progressDialog.show();
+                progressDialog.setCanceledOnTouchOutside(false);
+                browser.reload();
+            }, 700);
+            progressDialog.dismiss();
         });
 
     }
@@ -110,70 +102,5 @@ public class WebActivity extends AppCompatActivity {
             super.onBackPressed();
             finish();
         }
-    }
-
-    public void launchInter(){
-        interstitialAd =new InterstitialAd(this);
-        interstitialAd.setAdUnitId(getString(R.string.Interstitial_test));
-
-        //Set the adListener
-        interstitialAd.setAdListener(new AdListener() {
-
-
-            public void onAdLoaded() {
-                showAdInter();
-            }
-
-            public void onAdFailedToLoad(int errorCode) {
-                String message = String.format("onAdFailedToLoad(%s)", getErrorReason(errorCode));
-
-            }
-
-            @Override
-            public void onAdClosed() {
-
-            }
-        });
-
-    }
-
-    private void showAdInter(){
-
-        if(interstitialAd.isLoaded()){
-            interstitialAd.show();
-        }
-        else{
-            Log.d("", "ad was not ready to shown");
-        }
-    }
-
-    public void loadInterstitial(){
-
-        AdRequest adRequest= new AdRequest.Builder()
-                .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
-                .build();
-        //Load this Interstitial ad
-        interstitialAd.loadAd(adRequest);
-    }
-
-    //Get a string error
-    private String getErrorReason(int errorCode){
-
-        String errorReason="";
-        switch(errorCode){
-            case AdRequest.ERROR_CODE_INTERNAL_ERROR:
-                errorReason="Internal Error";
-                break;
-            case AdRequest.ERROR_CODE_INVALID_REQUEST:
-                errorReason="Invalid Request";
-                break;
-            case AdRequest.ERROR_CODE_NETWORK_ERROR:
-                errorReason="Network Error";
-                break;
-            case AdRequest.ERROR_CODE_NO_FILL:
-                errorReason="No Fill";
-                break;
-        }
-        return errorReason;
     }
 }

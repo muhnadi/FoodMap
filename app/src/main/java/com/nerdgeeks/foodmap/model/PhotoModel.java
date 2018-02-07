@@ -1,5 +1,7 @@
 package com.nerdgeeks.foodmap.model;
 
+import com.nerdgeeks.foodmap.app.AppConfig;
+
 import java.io.Serializable;
 
 /**
@@ -25,8 +27,8 @@ public class PhotoModel implements Serializable{
     public void setPhotoReference(String photoReference) {
         this.photoReference = photoReference;
         setPhotoUrl("https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference="
-                + photoReference
-                +"&key="
-                + "AIzaSyAbNDLy8J2oefyHeY-47pFrtU8EQl1Q04g");
+                + photoReference);
+//                +"&key="
+//                + AppConfig.GOOGLE_MAP_API_KEY);
     }
 }

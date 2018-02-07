@@ -24,8 +24,6 @@
     native <methods>;
 }
 
--dontwarn com.squareup.okhttp.**
-
 -dontwarn android.support.design.**
 -keep class android.support.design.** { *; }
 -keep interface android.support.design.** { *; }
@@ -35,8 +33,18 @@
 -keep public class android.support.v7.internal.widget.** { *; }
 -keep public class android.support.v7.internal.view.menu.** { *; }
 
--keep class com.squareup.okhttp.** { *; }
--keep interface com.squareup.okhttp.** { *; }
+# OkHttp
+-keepattributes Signature
+-keepattributes *Annotation*
+-keep class okhttp3.** { *; }
+-keep interface okhttp3.** { *; }
+-dontwarn okhttp3.**
 
--dontwarn com.squareup.okhttp.**
 -dontwarn okio.**
+-dontwarn rx.**
+-dontwarn retrofit2.**
+-dontwarn retrofit2.Platform$Java8
+-keep class retrofit2.** { *; }
+-keepclasseswithmembers class * {
+    @retrofit.http.* <methods>;
+}

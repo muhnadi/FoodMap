@@ -9,15 +9,8 @@
     app:cardCornerRadius="0dp"
     app:cardElevation="1dp">
 
-    <com.nerdgeeks.foodmap.view.FadeInNetworkImageView
+    <ImageView
         android:id="@+id/thumbnails"
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/thumbnail_height"
-        android:scaleType="centerCrop"
-        android:layout_gravity="center"/>
-
-    <com.nerdgeeks.foodmap.view.FadeInNetworkImageView
-        android:id="@+id/thumb"
         android:layout_width="match_parent"
         android:layout_height="@dimen/thumbnail_height"
         android:scaleType="centerCrop"

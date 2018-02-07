@@ -15,17 +15,14 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
 import android.widget.RatingBar;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
-import com.android.volley.toolbox.ImageLoader;
-import com.nerdgeeks.foodmap.app.AppController;
-import com.nerdgeeks.foodmap.view.OnItemClickListener;
+import com.nerdgeeks.foodmap.model.PlaceModel;
 import com.nerdgeeks.foodmap.utils.PaletteTransformation;
-import com.nerdgeeks.foodmap.R;
 import com.nerdgeeks.foodmap.utils.Utils;
-import com.nerdgeeks.foodmap.model.PlaceDeatilsModel;
-import com.nerdgeeks.foodmap.view.FadeInNetworkImageView;
+import com.nerdgeeks.foodmap.view.OnItemClickListener;
+import com.nerdgeeks.foodmap.R;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 
@@ -36,18 +33,16 @@ import java.util.ArrayList;
  */
 
 public class GMapsAdapter extends RecyclerView.Adapter<GMapsAdapter.ListHolder> {
-    private ArrayList<PlaceDeatilsModel> mapListModels;
+    private ArrayList<PlaceModel> mapListModels;
     private OnItemClickListener onItemClickListener;
     private Activity mContext;
-    private ImageLoader mImageLoader = AppController.getInstance().getImageLoader();
-    private int lastPosition = -1;
     private boolean isEnabled;
 
     public void setOnItemClickListener(OnItemClickListener onItemClickListener) {
         this.onItemClickListener = onItemClickListener;
     }
 
-    public GMapsAdapter(ArrayList<PlaceDeatilsModel> mapListModels, Activity context) {
+    public GMapsAdapter(ArrayList<PlaceModel> mapListModels, Activity context) {
         this.mapListModels = mapListModels;
         this.mContext = context;
     }
@@ -62,15 +57,10 @@ public class GMapsAdapter extends RecyclerView.Adapter<GMapsAdapter.ListHolder> 
     @Override
     public void onBindViewHolder(final ListHolder holder, int position) {
 
-        mContext.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                bindHolder(holder, holder.getAdapterPosition());
-            }
-        });
-    }
+        //mContext.runOnUiThread(() -> bindHolder(holder, position));
 
-    private void bindHolder(final ListHolder holder, final int position) {
+        position = holder.getAdapterPosition();
+
         //adding custom font
         final Typeface ThemeFont = Typeface.createFromAsset(mContext.getAssets(), "fonts/HelveticaNeue.ttf");
         holder.tName.setTypeface(ThemeFont);
@@ -78,15 +68,9 @@ public class GMapsAdapter extends RecyclerView.Adapter<GMapsAdapter.ListHolder> 
         holder.tRate.setTypeface(ThemeFont);
         holder.tOpen.setTypeface(ThemeFont);
 
-        String imgUrl = mapListModels.get(position).getThumbUrl();
+        String ratings = ""+mapListModels.get(position).getRating().toString();
 
-        String ratings = mapListModels.get(position).getResRating();
-
-        // Get the menu item image resource ID.
-        holder.tName.setText(mapListModels.get(position).getResName());
-        holder.tVicnity.setText(mapListModels.get(position).getResVicnity());
-
-        if (ratings == null) {
+        if (ratings.equals("0.0")) {
             holder.ratingBar.setRating(0);
             holder.tRate.setText("N/A");
         } else {
@@ -94,69 +78,68 @@ public class GMapsAdapter extends RecyclerView.Adapter<GMapsAdapter.ListHolder> 
             holder.tRate.setText(ratings);
         }
 
-        Picasso.with(mContext)
-                .load(mapListModels.get(position).getIconUrl())
-                .into(holder.iconView);
 
-        Boolean OPEN = Boolean.parseBoolean(mapListModels.get(position).getResOpen());
-
-        if (OPEN == false) {
-            holder.tOpen.setText("Closed");
-        } else if (OPEN == true) {
-            holder.tOpen.setText("OPEN");
+        try {
+            if (mapListModels.get(position).getOpeningHours().getOpenNow()) {
+                holder.tOpen.setText("OPEN");
+            } else {
+                holder.tOpen.setText("Closed");
+            }
+        } catch (Exception e){
+            holder.tOpen.setText("N/A");
         }
 
-        Picasso
-                .with(mContext)
-                .load(imgUrl).transform(PaletteTransformation.instance())
-                .into(holder.thumb, new Callback.EmptyCallback() {
-                    @Override
-                    public void onSuccess() {
+        // Get the menu item image resource ID.
+        holder.tName.setText(mapListModels.get(position).getName());
+        holder.tVicnity.setText(mapListModels.get(position).getVicinity());
 
-                        Bitmap bitmap = ((BitmapDrawable) holder.thumb.getDrawable()).getBitmap(); // Ew!
+        Picasso.with(mContext).load(mapListModels.get(position).getIcon()).into(holder.iconView);
 
-                        if (bitmap != null && !bitmap.isRecycled()) {
-                            Palette palette = PaletteTransformation.getPalette(bitmap);
-
-                            if (palette != null) {
-                                Palette.Swatch s = palette.getVibrantSwatch();
-                                if (s == null) {
-                                    s = palette.getDarkVibrantSwatch();
-                                }
-                                if (s == null) {
-                                    s = palette.getLightVibrantSwatch();
-                                }
-                                if (s == null) {
-                                    s = palette.getMutedSwatch();
-                                }
-
-                                if (s != null && position >= 0 && position < mapListModels.size()) {
-                                    Utils.animateViewColor(holder.mRelative, Color.BLACK, s.getRgb());
-                                }
-                            }
-                        }
-                    }
-                });
-
-        if (imgUrl != null) {
-            holder.getThumb.setImageUrl(imgUrl, mImageLoader);
-        } else {
-            holder.getThumb.setImageUrl(null, null);
-        }
-
-        holder.cardView.setCardBackgroundColor(Color.GRAY);
+        holder.cardView.setCardBackgroundColor(Color.BLACK);
 
         if (isEnabled){
-            holder.cardView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    onItemClickListener.onClick(view, position);
-                }
-            });
+            //holder.cardView.setOnClickListener(view -> onItemClickListener.onClick(view, position));
         }
-
-        setAnimation(holder.itemView, position);
     }
+
+//    private void bindHolder(final ListHolder holder, final int position) {
+//        //adding custom font
+//        final Typeface ThemeFont = Typeface.createFromAsset(mContext.getAssets(), "fonts/HelveticaNeue.ttf");
+//        holder.tName.setTypeface(ThemeFont);
+//        holder.tVicnity.setTypeface(ThemeFont);
+//        holder.tRate.setTypeface(ThemeFont);
+//        holder.tOpen.setTypeface(ThemeFont);
+//
+//        String ratings = mapListModels.get(position).getRating().toString();
+//
+//        // Get the menu item image resource ID.
+//        holder.tName.setText(mapListModels.get(position).getName());
+//        holder.tVicnity.setText(mapListModels.get(position).getVicinity());
+//
+//        if (ratings == null) {
+//            holder.ratingBar.setRating(0);
+//            holder.tRate.setText("N/A");
+//        } else {
+//            holder.ratingBar.setRating(Float.parseFloat(ratings));
+//            holder.tRate.setText(ratings);
+//        }
+//
+//        if (mapListModels.contains("opening_hours")) {
+//            if (mapListModels.get(position).getOpeningHours().getOpenNow()) {
+//                holder.tOpen.setText("OPEN");
+//            } else {
+//                holder.tOpen.setText("Closed");
+//            }
+//        }
+//
+//        Picasso.with(mContext).load(mapListModels.get(position).getIcon()).into(holder.iconView);
+//
+//        holder.cardView.setCardBackgroundColor(Color.BLACK);
+//
+//        if (isEnabled){
+//            //holder.cardView.setOnClickListener(view -> onItemClickListener.onClick(view, position));
+//        }
+//    }
 
     @Override
     public void onAttachedToRecyclerView(RecyclerView recyclerView) {
@@ -164,21 +147,21 @@ public class GMapsAdapter extends RecyclerView.Adapter<GMapsAdapter.ListHolder> 
     }
 
     // Add a new item to the RecyclerView on a predefined position
-    public void AddItems(int position, PlaceDeatilsModel data) {
+    public void AddItems(int position, PlaceModel data) {
         mapListModels.add(position, data);
         notifyItemInserted(position);
     }
 
-    private void setAnimation(View viewToAnimate, int position)
-    {
-        // If the bound view wasn't previously displayed on screen, it's animated
-        if (position > lastPosition)
-        {
-            Animation animation = AnimationUtils.loadAnimation(mContext, android.R.anim.slide_in_left);
-            viewToAnimate.startAnimation(animation);
-            lastPosition = position;
-        }
-    }
+//    private void setAnimation(View viewToAnimate, int position)
+//    {
+//        // If the bound view wasn't previously displayed on screen, it's animated
+//        if (position > lastPosition)
+//        {
+//            Animation animation = AnimationUtils.loadAnimation(mContext, android.R.anim.slide_in_left);
+//            viewToAnimate.startAnimation(animation);
+//            lastPosition = position;
+//        }
+//    }
 
     public void isOnItemClickListener(boolean isEnabled){
         this.isEnabled = isEnabled;
@@ -197,8 +180,7 @@ public class GMapsAdapter extends RecyclerView.Adapter<GMapsAdapter.ListHolder> 
         private OnItemClickListener onItemClickListener;
         private CardView cardView;
         private ImageView iconView;
-        private FadeInNetworkImageView thumb;
-        private FadeInNetworkImageView getThumb;
+        private ImageView thumb;
         private RatingBar ratingBar;
         private View mRelative;
 
@@ -206,16 +188,15 @@ public class GMapsAdapter extends RecyclerView.Adapter<GMapsAdapter.ListHolder> 
             super(itemView);
             this.onItemClickListener = onItemClickListener;
 
-            cardView = (CardView) itemView.findViewById(R.id.card);
-            tName = (TextView) itemView.findViewById(R.id.nName);
-            tVicnity = (TextView) itemView.findViewById(R.id.nVicnity);
-            tRate = (TextView) itemView.findViewById(R.id.nRate);
-            tOpen = (TextView) itemView.findViewById(R.id.nOpen);
-            iconView = (ImageView) itemView.findViewById(R.id.icon);
-            ratingBar = (RatingBar) itemView.findViewById(R.id.rate);
-            thumb = (FadeInNetworkImageView) itemView.findViewById(R.id.thumbnails);
-            getThumb = (FadeInNetworkImageView) itemView.findViewById(R.id.thumb);
-            mRelative = (RelativeLayout) itemView.findViewById(R.id.thumbHolder);
+            cardView = itemView.findViewById(R.id.card);
+            tName = itemView.findViewById(R.id.nName);
+            tVicnity = itemView.findViewById(R.id.nVicnity);
+            tRate = itemView.findViewById(R.id.nRate);
+            tOpen = itemView.findViewById(R.id.nOpen);
+            iconView = itemView.findViewById(R.id.icon);
+            ratingBar = itemView.findViewById(R.id.rate);
+            thumb = itemView.findViewById(R.id.thumbnails);
+            mRelative = itemView.findViewById(R.id.thumbHolder);
         }
 
         @Override

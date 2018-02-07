@@ -7,21 +7,13 @@ import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.v4.app.Fragment;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonObjectRequest;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -67,7 +59,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, GoogleM
     private String mParam2;
     private String mParam3;
     private GoogleMap gMap;
-    private Marker currentLocationMarker;
     private PrefManager prefManager;
     private SharedPreferences myPref;
     private double lat,lng;
@@ -117,14 +108,11 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, GoogleM
         }
 
         if (gMap == null) {
-            getActivity().runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-                    SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager()
-                            .findFragmentById(R.id.map);
-                    mapFragment.getMapAsync(MapFragment.this);
-                }
+            getActivity().runOnUiThread(() -> {
+                // Obtain the SupportMapFragment and get notified when the map is ready to be used.
+                SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager()
+                        .findFragmentById(R.id.map);
+                mapFragment.getMapAsync(MapFragment.this);
             });
         }
 
@@ -135,64 +123,58 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, GoogleM
     public void onMapReady(GoogleMap googleMap) {
         gMap = googleMap;
         gMap.setInfoWindowAdapter(this);
-        int height = 72;
-        int width = 72;
+        int height = 96;
+        int width = 96;
         BitmapDrawable bitmapdraw=(BitmapDrawable)getResources().getDrawable(R.drawable.ic_marker);
         Bitmap b = bitmapdraw.getBitmap();
         smallMarker = Bitmap.createScaledBitmap(b, width, height, false);
-        LoadInformation(mParam1);
+        //LoadInformation(mParam1);
     }
 
-    private void LoadInformation(String placeId) {
-        String googlePlaceDetails = "https://maps.googleapis.com/maps/api/place/details/json?placeid=" +
-                placeId +
-                "&sensor=true" +
-                "&key=" +
-                GOOGLE_MAP_API_KEY;
-
-        JsonObjectRequest request = new JsonObjectRequest(googlePlaceDetails,
-
-                new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject result) {
-                        Log.i(TAG, "onResponse: Result= " + result.toString());
-                        try {
-                            JSONObject jsonObject = result.getJSONObject("result");
-
-                            if (result.getString("status").equalsIgnoreCase("OK")) {
-
-                                String mLat = jsonObject.getJSONObject("geometry").getJSONObject("location").getString("lat");
-                                double lat = Double.parseDouble(mLat);
-
-                                String mLong = jsonObject.getJSONObject("geometry").getJSONObject("location").getString("lng");
-                                double lng = Double.parseDouble(mLong);
-
-                                String name = jsonObject.getString("name");
-
-                                RestaurantMap(gMap,new LatLng(lat,lng),name);
-                            } else if (result.getString("status").equalsIgnoreCase("ZERO_RESULTS")) {
-                                Toast.makeText(getActivity(), "No Information found!!!",
-                                        Toast.LENGTH_LONG).show();
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                            Log.e(TAG, "parseLocationResult: Error=" + e.getMessage());
-                            Toast.makeText(getActivity(), "Server Error!!!",
-                                    Toast.LENGTH_LONG).show();
-                        }
-
-                    }
-                },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Log.e(TAG, "onErrorResponse: Error= " + error);
-                        Log.e(TAG, "onErrorResponse: Error= " + error.getMessage());
-                    }
-                });
-
-        AppController.getInstance().addToRequestQueue(request);
-    }
+//    private void LoadInformation(String placeId) {
+//        String googlePlaceDetails = "https://maps.googleapis.com/maps/api/place/details/json?placeid=" +
+//                placeId +
+//                "&sensor=true" +
+//                "&key=" +
+//                GOOGLE_MAP_API_KEY;
+//
+//        JsonObjectRequest request = new JsonObjectRequest(googlePlaceDetails,
+//
+//                result -> {
+//                    Log.i(TAG, "onResponse: Result= " + result.toString());
+//                    try {
+//                        JSONObject jsonObject = result.getJSONObject("result");
+//
+//                        if (result.getString("status").equalsIgnoreCase("OK")) {
+//
+//                            String mLat = jsonObject.getJSONObject("geometry").getJSONObject("location").getString("lat");
+//                            double lat = Double.parseDouble(mLat);
+//
+//                            String mLong = jsonObject.getJSONObject("geometry").getJSONObject("location").getString("lng");
+//                            double lng = Double.parseDouble(mLong);
+//
+//                            String name = jsonObject.getString("name");
+//
+//                            RestaurantMap(gMap,new LatLng(lat,lng),name);
+//                        } else if (result.getString("status").equalsIgnoreCase("ZERO_RESULTS")) {
+//                            Toast.makeText(getActivity(), "No Information found!!!",
+//                                    Toast.LENGTH_LONG).show();
+//                        }
+//                    } catch (JSONException e) {
+//                        e.printStackTrace();
+//                        Log.e(TAG, "parseLocationResult: Error=" + e.getMessage());
+//                        Toast.makeText(getActivity(), "Server Error!!!",
+//                                Toast.LENGTH_LONG).show();
+//                    }
+//
+//                },
+//                error -> {
+//                    Log.e(TAG, "onErrorResponse: Error= " + error);
+//                    Log.e(TAG, "onErrorResponse: Error= " + error.getMessage());
+//                });
+//
+//        AppController.getInstance().addToRequestQueue(request);
+//    }
 
     private void RestaurantMap(final GoogleMap mMap,final LatLng latLng, String name){
         gMap = mMap;
@@ -200,11 +182,10 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, GoogleM
         double srcLat = Double.valueOf(mParam2);
         double srcLng = Double.valueOf(mParam3);
 
-        gMap.addMarker(
-                new MarkerOptions().position(
-                        new LatLng(lat,lng))
-                        .title(mAddressOutput)
-                        .icon(BitmapDescriptorFactory.fromBitmap(smallMarker)));
+
+        gMap.addMarker(new MarkerOptions().position(new LatLng(lat,lng))
+                .title("Current Location")
+                .icon(BitmapDescriptorFactory.fromBitmap(smallMarker)));
 
         Marker desMarker = gMap.addMarker(new MarkerOptions().position(latLng).title(name));
         desMarker.setIcon(BitmapDescriptorFactory.fromBitmap(smallMarker));
@@ -214,91 +195,85 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, GoogleM
         gMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 17));
         gMap.animateCamera(CameraUpdateFactory.zoomTo(17));
 
-        getRoutes(new LatLng(srcLat,srcLng),latLng);
+       // getRoutes(new LatLng(srcLat,srcLng),latLng);
     }
 
-    private void getRoutes(LatLng origin, final LatLng destination){
-        String apiMapUrl = "http://maps.googleapis.com/maps/api/directions/json?"
-                + "origin=" + origin.latitude
-                + "," + origin.longitude
-                + "&destination=" + destination.latitude
-                + "," + destination.longitude
-                + "&sensor=false"
-                + "&units=metric"
-                + "&mode=walking";
-
-        final List<List<HashMap<String, String>>> routes = new ArrayList<>() ;
-
-        JsonObjectRequest request = new JsonObjectRequest(apiMapUrl,
-
-                new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject result) {
-                        Log.i(TAG, "onResponse: Result= " + result.toString());
-                        try {
-                            if (result.getString(STATUS).equalsIgnoreCase(OK)) {
-                                JSONArray jsonRoutes = result.getJSONArray(ROUTES);
-                                for (int i=0; i<jsonRoutes.length(); i++){
-                                    List path = new ArrayList<>();
-                                    JSONObject overviewPolyline = jsonRoutes.getJSONObject(i).getJSONObject(OVERVIEW_POLYLINE);
-                                    String poly = overviewPolyline.getString(POINTS);
-                                    List<LatLng> list = decodePoly(poly);
-
-                                    for (int l=0; l<list.size(); l++){
-                                        HashMap<String, String> hm = new HashMap<>();
-                                        hm.put("lat", Double.toString((list.get(l)).latitude) );
-                                        hm.put("lng", Double.toString((list.get(l)).longitude) );
-                                        path.add(hm);
-                                    }
-                                    routes.add(path);
-                                }
-                                // Traversing through all the routes
-                                for (int i = 0; i < routes.size(); i++) {
-                                    ArrayList<LatLng> points = new ArrayList<>();
-
-                                    // Fetching i-th route
-                                    List<HashMap<String, String>> path = routes.get(i);
-
-                                    // Fetching all the points in i-th route
-                                    for (int j = 0; j < path.size(); j++) {
-                                        HashMap<String, String> point = path.get(j);
-
-                                        double lat = Double.parseDouble(point.get("lat"));
-                                        double lng = Double.parseDouble(point.get("lng"));
-                                        LatLng position = new LatLng(lat, lng);
-
-                                        points.add(position);
-                                    }
-                                    gMap.addPolyline(
-                                            new PolylineOptions()
-                                                    .geodesic(true)
-                                                    .addAll(points)
-                                                    .width(10).color(Color.RED).geodesic(true)
-                                    );
-                                }
-                            } else if (result.getString(STATUS).equalsIgnoreCase(ZERO_RESULTS)) {
-                                Toast.makeText(getActivity(), "No Information found!!!",
-                                        Toast.LENGTH_LONG).show();
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                            Log.e(TAG, "parseLocationResult: Error=" + e.getMessage());
-                            Toast.makeText(getActivity(), "Server Error!!!",
-                                    Toast.LENGTH_LONG).show();
-                        }
-
-                    }
-                },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Log.e(TAG, "onErrorResponse: Error= " + error);
-                        Log.e(TAG, "onErrorResponse: Error= " + error.getMessage());
-                    }
-                });
-
-        AppController.getInstance().addToRequestQueue(request);
-    }
+//    private void getRoutes(LatLng origin, final LatLng destination){
+//        String apiMapUrl = "http://maps.googleapis.com/maps/api/directions/json?"
+//                + "origin=" + origin.latitude
+//                + "," + origin.longitude
+//                + "&destination=" + destination.latitude
+//                + "," + destination.longitude
+//                + "&sensor=false"
+//                + "&units=metric"
+//                + "&mode=walking";
+//
+//        final List<List<HashMap<String, String>>> routes = new ArrayList<>() ;
+//
+//        JsonObjectRequest request = new JsonObjectRequest(apiMapUrl,
+//
+//                result -> {
+//                    Log.i(TAG, "onResponse: Result= " + result.toString());
+//                    try {
+//                        if (result.getString(STATUS).equalsIgnoreCase(OK)) {
+//                            JSONArray jsonRoutes = result.getJSONArray(ROUTES);
+//                            for (int i=0; i<jsonRoutes.length(); i++){
+//                                List path = new ArrayList<>();
+//                                JSONObject overviewPolyline = jsonRoutes.getJSONObject(i).getJSONObject(OVERVIEW_POLYLINE);
+//                                String poly = overviewPolyline.getString(POINTS);
+//                                List<LatLng> list = decodePoly(poly);
+//
+//                                for (int l=0; l<list.size(); l++){
+//                                    HashMap<String, String> hm = new HashMap<>();
+//                                    hm.put("lat", Double.toString((list.get(l)).latitude) );
+//                                    hm.put("lng", Double.toString((list.get(l)).longitude) );
+//                                    path.add(hm);
+//                                }
+//                                routes.add(path);
+//                            }
+//                            // Traversing through all the routes
+//                            for (int i = 0; i < routes.size(); i++) {
+//                                ArrayList<LatLng> points = new ArrayList<>();
+//
+//                                // Fetching i-th route
+//                                List<HashMap<String, String>> path = routes.get(i);
+//
+//                                // Fetching all the points in i-th route
+//                                for (int j = 0; j < path.size(); j++) {
+//                                    HashMap<String, String> point = path.get(j);
+//
+//                                    double lat = Double.parseDouble(point.get("lat"));
+//                                    double lng = Double.parseDouble(point.get("lng"));
+//                                    LatLng position = new LatLng(lat, lng);
+//
+//                                    points.add(position);
+//                                }
+//                                gMap.addPolyline(
+//                                        new PolylineOptions()
+//                                                .geodesic(true)
+//                                                .addAll(points)
+//                                                .width(10).color(Color.RED).geodesic(true)
+//                                );
+//                            }
+//                        } else if (result.getString(STATUS).equalsIgnoreCase(ZERO_RESULTS)) {
+//                            Toast.makeText(getActivity(), "No Information found!!!",
+//                                    Toast.LENGTH_LONG).show();
+//                        }
+//                    } catch (JSONException e) {
+//                        e.printStackTrace();
+//                        Log.e(TAG, "parseLocationResult: Error=" + e.getMessage());
+//                        Toast.makeText(getActivity(), "Server Error!!!",
+//                                Toast.LENGTH_LONG).show();
+//                    }
+//
+//                },
+//                error -> {
+//                    Log.e(TAG, "onErrorResponse: Error= " + error);
+//                    Log.e(TAG, "onErrorResponse: Error= " + error.getMessage());
+//                });
+//
+//        AppController.getInstance().addToRequestQueue(request);
+//    }
 
     private List<LatLng> decodePoly(String encoded) {
 
@@ -342,14 +317,10 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, GoogleM
     public View getInfoContents(Marker marker) {
         View info = View.inflate(getContext(),R.layout.item_info_window, null);
 
-        TextView title = (TextView) info.findViewById(R.id.mtitle);
+        TextView title = info.findViewById(R.id.mtitle);
         title.setText(marker.getTitle());
 
-//        TextView snippet = (TextView) info.findViewById(R.id.date);
-//        snippet.setText(marker.getSnippet());
-//        snippet.setTypeface(ThemeFont);
-
-        TextView roundTile = (TextView) info.findViewById(R.id.msg_thumb);
+        TextView roundTile = info.findViewById(R.id.msg_thumb);
         try {
             roundTile.setText(String.valueOf(marker.getTitle().charAt(0)));
         } catch (StringIndexOutOfBoundsException ex){

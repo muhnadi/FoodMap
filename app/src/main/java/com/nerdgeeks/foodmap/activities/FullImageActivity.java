@@ -22,7 +22,7 @@ public class FullImageActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_full_image);
 
-        AdView mAdView = (AdView) findViewById(R.id.adView);
+        AdView mAdView = findViewById(R.id.adView);
         AdRequest adRequest = new AdRequest.Builder()
                 .build();
         mAdView.loadAd(adRequest);
@@ -31,7 +31,7 @@ public class FullImageActivity extends AppCompatActivity {
         pos = getIntent().getIntExtra("position", 0);
         ArrayList<PhotoModel> mList = (ArrayList<PhotoModel>) getIntent().getSerializableExtra("arrayList");
 
-        ViewPager mViewPager = (ViewPager) findViewById(R.id.viewpager);
+        ViewPager mViewPager = findViewById(R.id.viewpager);
         mViewPager.setAdapter(new ViewPagerAdapter(getApplicationContext(), mList));
         mViewPager.setCurrentItem(vPosition);
         mViewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {

@@ -1,5 +1,7 @@
 package com.nerdgeeks.foodmap.app;
 
+import android.content.res.Resources;
+
 /**
  * Created by hp on 11/18/2016.
  */
@@ -33,11 +35,9 @@ public final class AppConfig {
     public static final String OVERVIEW_POLYLINE = "overview_polyline";
     public static final String POINTS = "points";
 
-    public static final String GOOGLE_MAP_API_KEY =
-            "AIzaSyCwTM50I3Hziu6Vyzf7WJnC9t1zjVCGe_c";
+    public static final String GOOGLE_MAP_API_KEY = "AIzaSyCqf1CgILEHcFSDfF_EPu2alMquq8eWvo0";
     public static final int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
     public static final int REQUEST_CHECK_SETTINGS = 0x1;
-    public static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
 
 
     public static final String INTERNET_ERROR = "Unable to resolve host, No internet access";

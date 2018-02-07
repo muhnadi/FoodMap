@@ -12,10 +12,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonObjectRequest;
 import com.nerdgeeks.foodmap.app.AppController;
 import com.nerdgeeks.foodmap.view.OnItemClickListener;
 import com.nerdgeeks.foodmap.R;
@@ -77,89 +73,79 @@ public class PhotosFragment extends Fragment {
             return rootView;
         }
 
-        recyclerView = (RecyclerView) rootView.findViewById(R.id.rView);
+        recyclerView = rootView.findViewById(R.id.rView);
         StaggeredGridLayoutManager layoutManager =
                 new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL);
 
         recyclerView.setLayoutManager(layoutManager);
-        mStatusText = (TextView) rootView.findViewById(R.id.notifier);
+        mStatusText = rootView.findViewById(R.id.notifier);
         mStatusText.setVisibility(View.INVISIBLE);
-        LoadInformation(mParam1);
+        //LoadInformation(mParam1);
         return rootView;
     }
 
-    private void LoadInformation(String placeId) {
-        String googlePlaceDetails = "https://maps.googleapis.com/maps/api/place/details/json?placeid=" +
-                placeId +
-                "&sensor=true" +
-                "&key=" +
-                GOOGLE_MAP_API_KEY;
+//    private void LoadInformation(String placeId) {
+//        String googlePlaceDetails = "https://maps.googleapis.com/maps/api/place/details/json?placeid=" +
+//                placeId +
+//                "&sensor=true" +
+//                "&key=" +
+//                GOOGLE_MAP_API_KEY;
+//
+//        JsonObjectRequest request = new JsonObjectRequest(googlePlaceDetails,
+//
+//                result -> {
+//                    Log.i(TAG, "onResponse: Result= " + result.toString());
+//                    String ref;
+//                    try {
+//                        JSONObject jsonObject = result.getJSONObject("result");
+//                        JSONArray jsonArray = jsonObject.getJSONArray("photos");
+//
+//                        if (result.getString("status").equalsIgnoreCase("OK")) {
+//                            for (int i = 0; i < jsonArray.length(); i++) {
+//                                JSONObject obj = jsonArray.getJSONObject(i);
+//                                PhotoModel model = new PhotoModel();
+//                                if (!obj.isNull("photo_reference")) {
+//                                    ref = obj.getString("photo_reference");
+//                                    model.setPhotoReference(ref);
+//                                    mStatusText.setVisibility(View.INVISIBLE);
+//                                    arrayPhotos.add(model);
+//                                }
+//                            }
+//                            photoAdapter = new PhotosAdapter(arrayPhotos, getActivity());
+//                            photoAdapter.notifyDataSetChanged();
+//
+//                            if (photoAdapter != null) {
+//                                photoAdapter.setOnItemClickListener(recyclerRowClickListener);
+//                                recyclerView.setAdapter(photoAdapter);
+//                                recyclerView.setHasFixedSize(true);
+//                            } else {
+//                                mStatusText.setText("No Photo Available");
+//                                mStatusText.setVisibility(View.VISIBLE);
+//                            }
+//                        } else if (result.getString("status").equalsIgnoreCase("ZERO_RESULTS")) {
+//                            Toast.makeText(getActivity(), "No Information found!!!",
+//                                    Toast.LENGTH_LONG).show();
+//                        }
+//                    } catch (JSONException e) {
+//                        e.printStackTrace();
+//                        Log.e(TAG, "parseLocationResult: Error=" + e.getMessage());
+//                        mStatusText.setText("No Photo Available");
+//                        mStatusText.setVisibility(View.VISIBLE);
+//                    }
+//                },
+//                error -> {
+//                    Log.e(TAG, "onErrorResponse: Error= " + error);
+//                    Log.e(TAG, "onErrorResponse: Error= " + error.getMessage());
+//                });
+//
+//        AppController.getInstance().addToRequestQueue(request);
+//    }
 
-        JsonObjectRequest request = new JsonObjectRequest(googlePlaceDetails,
+    private OnItemClickListener recyclerRowClickListener = (v, position) -> {
+        Intent detailIntent = new Intent(getActivity(), FullImageActivity.class);
+        detailIntent.putExtra("pos", position);
+        detailIntent.putExtra("arrayList",arrayPhotos);
+        startActivity(detailIntent);
 
-                new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject result) {
-                        Log.i(TAG, "onResponse: Result= " + result.toString());
-                        String ref;
-                        try {
-                            JSONObject jsonObject = result.getJSONObject("result");
-                            JSONArray jsonArray = jsonObject.getJSONArray("photos");
-
-                            if (result.getString("status").equalsIgnoreCase("OK")) {
-                                for (int i = 0; i < jsonArray.length(); i++) {
-                                    JSONObject obj = jsonArray.getJSONObject(i);
-                                    PhotoModel model = new PhotoModel();
-                                    if (!obj.isNull("photo_reference")) {
-                                        ref = obj.getString("photo_reference");
-                                        model.setPhotoReference(ref);
-                                        mStatusText.setVisibility(View.INVISIBLE);
-                                        arrayPhotos.add(model);
-                                    }
-                                }
-                                photoAdapter = new PhotosAdapter(arrayPhotos, getActivity());
-                                photoAdapter.notifyDataSetChanged();
-
-                                if (photoAdapter != null) {
-                                    photoAdapter.setOnItemClickListener(recyclerRowClickListener);
-                                    recyclerView.setAdapter(photoAdapter);
-                                    recyclerView.setHasFixedSize(true);
-                                } else {
-                                    mStatusText.setText("No Photo Available");
-                                    mStatusText.setVisibility(View.VISIBLE);
-                                }
-                            } else if (result.getString("status").equalsIgnoreCase("ZERO_RESULTS")) {
-                                Toast.makeText(getActivity(), "No Information found!!!",
-                                        Toast.LENGTH_LONG).show();
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                            Log.e(TAG, "parseLocationResult: Error=" + e.getMessage());
-                            mStatusText.setText("No Photo Available");
-                            mStatusText.setVisibility(View.VISIBLE);
-                        }
-                    }
-                },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Log.e(TAG, "onErrorResponse: Error= " + error);
-                        Log.e(TAG, "onErrorResponse: Error= " + error.getMessage());
-                    }
-                });
-
-        AppController.getInstance().addToRequestQueue(request);
-    }
-
-    private OnItemClickListener recyclerRowClickListener = new OnItemClickListener() {
-
-        @Override
-        public void onClick(View v, int position) {
-            Intent detailIntent = new Intent(getActivity(), FullImageActivity.class);
-            detailIntent.putExtra("pos", position);
-            detailIntent.putExtra("arrayList",arrayPhotos);
-            startActivity(detailIntent);
-
-        }
     };
 }

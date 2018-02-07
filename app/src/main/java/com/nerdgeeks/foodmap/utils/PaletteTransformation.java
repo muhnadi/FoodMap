@@ -2,9 +2,7 @@ package com.nerdgeeks.foodmap.utils;
 
 import android.graphics.Bitmap;
 import android.support.v7.graphics.Palette;
-
 import com.squareup.picasso.Transformation;
-
 import java.util.Map;
 import java.util.WeakHashMap;
 

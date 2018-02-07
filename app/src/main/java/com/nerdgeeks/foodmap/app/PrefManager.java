@@ -5,9 +5,8 @@ import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.util.Log;
 
-import com.google.android.gms.maps.model.LatLng;
 import com.google.gson.Gson;
-import com.nerdgeeks.foodmap.model.PlaceDeatilsModel;
+import com.nerdgeeks.foodmap.model.PlaceModel;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,29 +31,34 @@ public class PrefManager {
         sharedPreferences = mContext.getSharedPreferences(PREF_NAME, PRIVATE_MODE);
     }
 
-    public void storeData(ArrayList<PlaceDeatilsModel> arrayList){
+    public void storeData(ArrayList<PlaceModel> arrayList){
+
         Editor editor = sharedPreferences.edit();
         Gson gson = new Gson();
+
+        if(sharedPreferences.contains(MAP_ARRAY)){
+            editor.remove(MAP_ARRAY);
+        }
 
         editor.putString(MAP_ARRAY,gson.toJson(arrayList));
         editor.apply();
         Log.e(TAG,"Inserted");
     }
 
-    public ArrayList<PlaceDeatilsModel> readData(){
-        List<PlaceDeatilsModel> modelArrayList;
+    public ArrayList<PlaceModel> readData(){
+        List<PlaceModel> modelArrayList;
 
         if(sharedPreferences.contains(MAP_ARRAY)){
             Gson gson = new Gson();
             String json = sharedPreferences.getString(MAP_ARRAY,null);
-            PlaceDeatilsModel [] placeDeatilsModels = gson.fromJson(json,PlaceDeatilsModel[].class);
+            PlaceModel [] placeModels = gson.fromJson(json,PlaceModel[].class);
 
-            modelArrayList = Arrays.asList(placeDeatilsModels);
+            modelArrayList = Arrays.asList(placeModels);
             modelArrayList = new ArrayList<>(modelArrayList);
         } else {
             return null;
         }
-        return (ArrayList<PlaceDeatilsModel>) modelArrayList;
+        return (ArrayList<PlaceModel>) modelArrayList;
     }
 
     public boolean isPrefAvailable(){

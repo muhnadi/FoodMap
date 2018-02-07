@@ -18,6 +18,14 @@
             android:layout_above="@+id/navigation"
             />
 
+        <com.google.android.gms.ads.AdView
+            android:id="@+id/adView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:adSize="SMART_BANNER"
+            app:adUnitId="@string/Banner_test"
+            android:layout_above="@+id/navigation"/>
+
         <android.support.design.widget.BottomNavigationView
             android:id="@+id/navigation"
             android:layout_width="match_parent"

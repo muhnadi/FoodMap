@@ -3,16 +3,13 @@ package com.nerdgeeks.foodmap.activities;
 import android.Manifest;
 import android.app.ProgressDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomSheetBehavior;
-import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -31,10 +28,6 @@ import android.widget.ImageView;
 import android.widget.RatingBar;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonObjectRequest;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.google.android.gms.maps.model.LatLng;
@@ -46,14 +39,11 @@ import com.nerdgeeks.foodmap.fragments.PhotosFragment;
 import com.nerdgeeks.foodmap.fragments.ReviewsFragment;
 import com.nerdgeeks.foodmap.model.TabsItem;
 import com.squareup.picasso.Picasso;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import java.util.ArrayList;
 import java.util.List;
-
 import it.neokree.materialtabs.MaterialTab;
 import it.neokree.materialtabs.MaterialTabHost;
 import it.neokree.materialtabs.MaterialTabListener;
@@ -64,11 +54,12 @@ import static com.nerdgeeks.foodmap.app.AppConfig.*;
 
 public class InfoActivity extends AppCompatActivity implements MaterialTabListener {
 
+    private static final int REQUEST_PHONE_CALL = 1;
     private ProgressDialog progressDialog;
     private List<TabsItem> mTabs = new ArrayList<>();
     private int pos;
     private TextView mPhone, mWeb, mName, mVicnity, mOpen, mRate, mTime, mDistance;
-    private String web, phone, mapUrl, iconUrl, placeId, photoUrl, photoReference;
+    private String web, phone, mapUrl, iconUrl, placeId, photoUrl2, photoReference;
     private MaterialTabHost tabHost;
     private ViewPager viewPager;
     private ImageView mThumbs;
@@ -98,13 +89,13 @@ public class InfoActivity extends AppCompatActivity implements MaterialTabListen
         }
         setContentView(R.layout.activity_info);
 
-        final Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        final Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
 
-        AdView mAdView = (AdView) findViewById(R.id.adView);
+        AdView mAdView = findViewById(R.id.adView);
         AdRequest adRequest = new AdRequest.Builder()
                 .build();
         mAdView.loadAd(adRequest);
@@ -120,26 +111,21 @@ public class InfoActivity extends AppCompatActivity implements MaterialTabListen
         progressDialog = new ProgressDialog(this);
         progressDialog.setMessage("Loading...");
 
-        photoUrl = "https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference="
-                + photoReference
-                + "&key="
-                + "AIzaSyAbNDLy8J2oefyHeY-47pFrtU8EQl1Q04g";
+        mThumbs = findViewById(R.id.imgThumb);
 
-        mThumbs = (ImageView) findViewById(R.id.imgThumb);
+        mName = findViewById(R.id.nName);
+        mVicnity = findViewById(R.id.nVicnity);
+        mOpen = findViewById(R.id.nOpen);
+        mRate = findViewById(R.id.nRate);
+        mPhone = findViewById(R.id.nPhone);
+        mWeb = findViewById(R.id.nWeb);
+        mTime = findViewById(R.id.nTime);
+        mDistance = findViewById(R.id.nDistance);
 
-        mName = (TextView) findViewById(R.id.nName);
-        mVicnity = (TextView) findViewById(R.id.nVicnity);
-        mOpen = (TextView) findViewById(R.id.nOpen);
-        mRate = (TextView) findViewById(R.id.nRate);
-        mPhone = (TextView) findViewById(R.id.nPhone);
-        mWeb = (TextView) findViewById(R.id.nWeb);
-        mTime = (TextView) findViewById(R.id.nTime);
-        mDistance = (TextView) findViewById(R.id.nDistance);
+        ratingBar = findViewById(R.id.rateBar);
+        viewPager = findViewById(R.id.viewPager);
 
-        ratingBar = (RatingBar) findViewById(R.id.rateBar);
-        viewPager = (ViewPager) findViewById(R.id.viewPager);
-
-        LoadInformation(placeId);
+        //LoadInformation(placeId);
         createTabsItem();
 
         /**
@@ -157,7 +143,7 @@ public class InfoActivity extends AppCompatActivity implements MaterialTabListen
         });
 
         //Adding TabHost
-        tabHost = (MaterialTabHost) findViewById(R.id.materialTabHost);
+        tabHost = findViewById(R.id.materialTabHost);
 
         // insert all tabs from pagerAdapter data
         for (int i = 0; i < tabAdapter.getCount(); i++) {
@@ -168,22 +154,13 @@ public class InfoActivity extends AppCompatActivity implements MaterialTabListen
             );
         }
 
-        final FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                new Handler().postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        Intent intent = getIntent();
-                        intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
-                        finish();
-                        startActivity(intent);
-                    }
-                }, 700);
-
-            }
-        });
+        final FloatingActionButton fab = findViewById(R.id.fab);
+        fab.setOnClickListener(view -> new Handler().postDelayed(() -> {
+            Intent intent = getIntent();
+            intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
+            finish();
+            startActivity(intent);
+        }, 700));
 
         //final CoordinatorLayout layout = findViewById(R.id.activity_info);
 
@@ -226,185 +203,165 @@ public class InfoActivity extends AppCompatActivity implements MaterialTabListen
         mTabs.add(new TabsItem(ReviewsFragment.newInstance(placeId, "")));
     }
 
-    private void LoadInformation(String placeId) {
-        progressDialog.show();
-        String googlePlaceDetails = "https://maps.googleapis.com/maps/api/place/details/json?placeid=" +
-                placeId +
-                "&sensor=false" +
-                "&key=" +
-                GOOGLE_MAP_API_KEY;
-
-        JsonObjectRequest request = new JsonObjectRequest(googlePlaceDetails,
-
-                new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject result) {
-                        Log.i(TAG, "onResponse: Result= " + result.toString());
-                        try {
-                            JSONObject jsonObject = result.getJSONObject("result");
-
-                            if (result.getString("status").equalsIgnoreCase("OK")) {
-
-                                if (!jsonObject.isNull("formatted_address")) {
-                                    String vicnity = jsonObject.getString("formatted_address");
-                                    mVicnity.setText(vicnity);
-                                } else {
-                                    mVicnity.setText("N/A");
-                                }
-
-                                if (!jsonObject.isNull("international_phone_number")) {
-                                    phone = jsonObject.getString("international_phone_number");
-                                    mPhone.setText("Phone : " + phone);
-                                    mPhone.setOnClickListener(new View.OnClickListener() {
-                                        @Override
-                                        public void onClick(View view) {
-                                            startCall();
-                                        }
-                                    });
-                                } else {
-                                    mPhone.setText("N/A");
-                                }
-
-                                if (!jsonObject.isNull("icon")) {
-                                    iconUrl = jsonObject.getString("icon");
-                                    Picasso.with(InfoActivity.this)
-                                            .load(iconUrl)
-                                            .into(mThumbs);
-                                }
-
-                                if (!jsonObject.isNull("name")) {
-                                    String name = jsonObject.getString("name");
-                                    mName.setText(name);
-                                }
-
-                                String open = jsonObject.getJSONObject("opening_hours").getString("open_now");
-                                Boolean OPEN = Boolean.parseBoolean(open);
-
-                                if (OPEN) {
-                                    mOpen.setText("Opened Now");
-                                }
-
-                                if (!OPEN) {
-                                    mOpen.setText("Closed Now");
-                                }
-
-                                if (!jsonObject.isNull("website")) {
-                                    web = jsonObject.getString("website");
-                                    mWeb.setText("Website : " + web);
-                                    mWeb.setOnClickListener(new View.OnClickListener() {
-                                        @Override
-                                        public void onClick(View view) {
-                                            Intent urlIntent = new Intent(InfoActivity.this, WebActivity.class);
-                                            urlIntent.putExtra("url", web);
-                                            startActivity(urlIntent);
-                                        }
-                                    });
-                                } else {
-                                    mWeb.setText("N/A");
-                                }
-
-                                if (!jsonObject.isNull("url")) {
-                                    mapUrl = jsonObject.getString("url");
-                                }
-
-                                if (!jsonObject.isNull("rating")) {
-                                    String rate = jsonObject.getString("rating");
-                                    mRate.setText(rate);
-                                    ratingBar.setRating(Float.parseFloat(rate));
-                                }else {
-                                    mRate.setText("N/A");
-                                }
-
-                                String mLat = jsonObject.getJSONObject("geometry").getJSONObject("location").getString("lat");
-                                double lat = Double.parseDouble(mLat);
-
-                                String mLong = jsonObject.getJSONObject("geometry").getJSONObject("location").getString("lng");
-                                double lng = Double.parseDouble(mLong);
-
-                                if (!jsonObject.isNull("name")) {
-                                    resName = jsonObject.getString("name");
-                                } else {
-                                    resName = "";
-                                }
-                                LoadDistanceTime(new LatLng(latitude,longitude),new LatLng(lat,lng));
-                                progressDialog.dismiss();
-
-                            } else if (result.getString("status").equalsIgnoreCase("ZERO_RESULTS")) {
-                                Toast.makeText(getBaseContext(), "No Information found!!!",
-                                        Toast.LENGTH_LONG).show();
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                            Log.e(TAG, "parseLocationResult: Error=" + e.getMessage());
-                            progressDialog.dismiss();
-                        }
-                    }
-                },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Log.e(TAG, "onErrorResponse: Error= " + error);
-                        Log.e(TAG, "onErrorResponse: Error= " + error.getMessage());
-                    }
-                });
-
-        AppController.getInstance().addToRequestQueue(request);
-    }
-
-    private void LoadDistanceTime(LatLng origin, LatLng destination){
-        String URL = "http://maps.googleapis.com/maps/api/distancematrix/json?"
-                + "origins=" + origin.latitude
-                + "," + origin.longitude
-                + "&destinations=" + destination.latitude
-                + "," + destination.longitude
-                + "&mode=walking"
-                + "&sensor=false";
-
-        JsonObjectRequest request = new JsonObjectRequest(URL,
-
-                new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject result) {
-                        Log.i(TAG, "onResponse: Result= " + result.toString());
-                        try {
-                            if (result.getString("status").equalsIgnoreCase("OK")) {
-
-                                JSONArray jsonRows = result.getJSONArray("rows");
-                                for (int i=0; i<jsonRows.length(); i++){
-                                    JSONArray jsonElements = ( (JSONObject)jsonRows.get(i)).getJSONArray("elements");
-                                    for (int j=0; j<jsonElements.length(); j++){
-                                        JSONObject jsonDistance = jsonElements.getJSONObject(j).getJSONObject("distance");
-                                        JSONObject jsonDuration = jsonElements.getJSONObject(j).getJSONObject("duration");
-
-                                        String distance = jsonDistance.getString("text");
-                                        mDistance.setText(distance);
-
-                                        String duration = jsonDuration.getString("text");
-                                        mTime.setText(duration);
-                                    }
-                                }
-
-                            } else if (result.getString("status").equalsIgnoreCase("ZERO_RESULTS")) {
-                                Toast.makeText(getBaseContext(), "No Information found!!!",
-                                        Toast.LENGTH_LONG).show();
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                            Log.e(TAG, "parseLocationResult: Error=" + e.getMessage());
-                            progressDialog.dismiss();
-                        }
-                    }
-                },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Log.e(TAG, "onErrorResponse: Error= " + error);
-                        Log.e(TAG, "onErrorResponse: Error= " + error.getMessage());
-                    }
-                });
-
-        AppController.getInstance().addToRequestQueue(request);
-    }
+//    private void LoadInformation(String placeId) {
+//        progressDialog.show();
+//        String googlePlaceDetails = "https://maps.googleapis.com/maps/api/place/details/json?placeid=" +
+//                placeId +
+//                "&sensor=false" +
+//                "&key=" +
+//                GOOGLE_MAP_API_KEY;
+//
+//        JsonObjectRequest request = new JsonObjectRequest(googlePlaceDetails,
+//
+//                result -> {
+//                    Log.i(TAG, "onResponse: Result= " + result.toString());
+//                    try {
+//                        JSONObject jsonObject = result.getJSONObject("result");
+//
+//                        if (result.getString("status").equalsIgnoreCase("OK")) {
+//
+//                            if (!jsonObject.isNull("formatted_address")) {
+//                                String vicnity = jsonObject.getString("formatted_address");
+//                                mVicnity.setText(vicnity);
+//                            } else {
+//                                mVicnity.setText("N/A");
+//                            }
+//
+//                            if (!jsonObject.isNull("international_phone_number")) {
+//                                phone = jsonObject.getString("international_phone_number");
+//                                mPhone.setText("Phone : " + phone);
+//                                mPhone.setOnClickListener(view -> startCall());
+//                            } else {
+//                                mPhone.setText("N/A");
+//                            }
+//
+//                            if (!jsonObject.isNull("icon")) {
+//                                iconUrl = jsonObject.getString("icon");
+//                                Picasso.with(InfoActivity.this)
+//                                        .load(iconUrl)
+//                                        .into(mThumbs);
+//                            }
+//
+//                            if (!jsonObject.isNull("name")) {
+//                                String name = jsonObject.getString("name");
+//                                mName.setText(name);
+//                            }
+//
+//                            String open = jsonObject.getJSONObject("opening_hours").getString("open_now");
+//                            Boolean OPEN = Boolean.parseBoolean(open);
+//
+//                            if (OPEN) {
+//                                mOpen.setText("Opened Now");
+//                            }
+//
+//                            if (!OPEN) {
+//                                mOpen.setText("Closed Now");
+//                            }
+//
+//                            if (!jsonObject.isNull("website")) {
+//                                web = jsonObject.getString("website");
+//                                mWeb.setText("Website : " + web);
+//                                mWeb.setOnClickListener(view -> {
+//                                    Intent urlIntent = new Intent(InfoActivity.this, WebActivity.class);
+//                                    urlIntent.putExtra("url", web);
+//                                    startActivity(urlIntent);
+//                                });
+//                            } else {
+//                                mWeb.setText("N/A");
+//                            }
+//
+//                            if (!jsonObject.isNull("url")) {
+//                                mapUrl = jsonObject.getString("url");
+//                            }
+//
+//                            if (!jsonObject.isNull("rating")) {
+//                                String rate = jsonObject.getString("rating");
+//                                mRate.setText(rate);
+//                                ratingBar.setRating(Float.parseFloat(rate));
+//                            }else {
+//                                mRate.setText("N/A");
+//                            }
+//
+//                            String mLat = jsonObject.getJSONObject("geometry").getJSONObject("location").getString("lat");
+//                            double lat = Double.parseDouble(mLat);
+//
+//                            String mLong = jsonObject.getJSONObject("geometry").getJSONObject("location").getString("lng");
+//                            double lng = Double.parseDouble(mLong);
+//
+//                            if (!jsonObject.isNull("name")) {
+//                                resName = jsonObject.getString("name");
+//                            } else {
+//                                resName = "";
+//                            }
+//                            LoadDistanceTime(new LatLng(latitude,longitude),new LatLng(lat,lng));
+//                            progressDialog.dismiss();
+//
+//                        } else if (result.getString("status").equalsIgnoreCase("ZERO_RESULTS")) {
+//                            Toast.makeText(getBaseContext(), "No Information found!!!",
+//                                    Toast.LENGTH_LONG).show();
+//                        }
+//                    } catch (JSONException e) {
+//                        e.printStackTrace();
+//                        Log.e(TAG, "parseLocationResult: Error=" + e.getMessage());
+//                        progressDialog.dismiss();
+//                    }
+//                },
+//                error -> {
+//                    Log.e(TAG, "onErrorResponse: Error= " + error);
+//                    Log.e(TAG, "onErrorResponse: Error= " + error.getMessage());
+//                });
+//
+//        AppController.getInstance().addToRequestQueue(request);
+//    }
+//
+//    private void LoadDistanceTime(LatLng origin, LatLng destination){
+//        String URL = "http://maps.googleapis.com/maps/api/distancematrix/json?"
+//                + "origins=" + origin.latitude
+//                + "," + origin.longitude
+//                + "&destinations=" + destination.latitude
+//                + "," + destination.longitude
+//                + "&mode=walking"
+//                + "&sensor=false";
+//
+//        JsonObjectRequest request = new JsonObjectRequest(URL,
+//
+//                result -> {
+//                    Log.i(TAG, "onResponse: Result= " + result.toString());
+//                    try {
+//                        if (result.getString("status").equalsIgnoreCase("OK")) {
+//
+//                            JSONArray jsonRows = result.getJSONArray("rows");
+//                            for (int i=0; i<jsonRows.length(); i++){
+//                                JSONArray jsonElements = ( (JSONObject)jsonRows.get(i)).getJSONArray("elements");
+//                                for (int j=0; j<jsonElements.length(); j++){
+//                                    JSONObject jsonDistance = jsonElements.getJSONObject(j).getJSONObject("distance");
+//                                    JSONObject jsonDuration = jsonElements.getJSONObject(j).getJSONObject("duration");
+//
+//                                    String distance = jsonDistance.getString("text");
+//                                    mDistance.setText(distance);
+//
+//                                    String duration = jsonDuration.getString("text");
+//                                    mTime.setText(duration);
+//                                }
+//                            }
+//
+//                        } else if (result.getString("status").equalsIgnoreCase("ZERO_RESULTS")) {
+//                            Toast.makeText(getBaseContext(), "No Information found!!!",
+//                                    Toast.LENGTH_LONG).show();
+//                        }
+//                    } catch (JSONException e) {
+//                        e.printStackTrace();
+//                        Log.e(TAG, "parseLocationResult: Error=" + e.getMessage());
+//                        progressDialog.dismiss();
+//                    }
+//                },
+//                error -> {
+//                    Log.e(TAG, "onErrorResponse: Error= " + error);
+//                    Log.e(TAG, "onErrorResponse: Error= " + error.getMessage());
+//                });
+//
+//        AppController.getInstance().addToRequestQueue(request);
+//    }
 
     public void onBackPressed() {
         super.onBackPressed();
@@ -459,21 +416,20 @@ public class InfoActivity extends AppCompatActivity implements MaterialTabListen
                     .setMessage(phone)
                     .setNegativeButton(android.R.string.cancel, null)
                     .setPositiveButton(android.R.string.ok,
-                            new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog,
-                                                    int which) {
-                                    try {
-                                        Intent phoneIntent = new Intent(Intent.ACTION_CALL);
-                                        phoneIntent.setData(Uri.parse("tel:" + phone));
-                                        if (ActivityCompat.checkSelfPermission(getBaseContext(), Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
-                                            return;
+                            (dialog, which) -> {
+                                try {
+                                    Intent phoneIntent = new Intent(Intent.ACTION_CALL);
+                                    phoneIntent.setData(Uri.parse("tel:" + phone));
+                                    if (ActivityCompat.checkSelfPermission(getBaseContext(), Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                            requestPermissions(new String[]{Manifest.permission.CALL_PHONE}, REQUEST_PHONE_CALL);
                                         }
+                                    } else {
                                         startActivity(phoneIntent);
-                                    } catch (SecurityException e) {
-                                        Toast.makeText(InfoActivity.this,
-                                                "Call failed, please try again later!", Toast.LENGTH_SHORT).show();
                                     }
+                                } catch (SecurityException e) {
+                                    Toast.makeText(InfoActivity.this,
+                                            "Call failed, please try again later!", Toast.LENGTH_SHORT).show();
                                 }
                             })
                     .show();
@@ -484,6 +440,29 @@ public class InfoActivity extends AppCompatActivity implements MaterialTabListen
                     .setMessage(phone)
                     .setNegativeButton(android.R.string.cancel, null)
                     .show();
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           @NonNull String permissions[], @NonNull int[] grantResults) {
+        switch (requestCode) {
+            case REQUEST_PHONE_CALL: {
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    try {
+                        Intent phoneIntent = new Intent(Intent.ACTION_CALL);
+                        phoneIntent.setData(Uri.parse("tel:" + phone));
+                        startActivity(phoneIntent);
+
+                    } catch (android.content.ActivityNotFoundException | SecurityException ex) {
+                        Toast.makeText(this,
+                                "Call failed, please try again later!", Toast.LENGTH_SHORT).show();
+                    }
+                } else {
+
+                }
+                return;
+            }
         }
     }
 

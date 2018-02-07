@@ -87,12 +87,12 @@ public class ReviewsAdapter extends RecyclerView.Adapter<ReviewsAdapter.ListHold
 
         ListHolder(View itemView) {
             super(itemView);
-            user_pic = (ImageView) itemView.findViewById(R.id.pro_pic);
-            user_name = (AppCompatTextView) itemView.findViewById(R.id.author_name);
-            user_ratings = (AppCompatTextView) itemView.findViewById(R.id.author_rate);
-            user_text = (AppCompatTextView) itemView.findViewById(R.id.author_text);
-            user_ratingbar = (AppCompatRatingBar) itemView.findViewById(R.id.author_ratingbar);
-            user_time = (AppCompatTextView) itemView.findViewById(R.id.author_time);
+            user_pic = itemView.findViewById(R.id.pro_pic);
+            user_name = itemView.findViewById(R.id.author_name);
+            user_ratings = itemView.findViewById(R.id.author_rate);
+            user_text = itemView.findViewById(R.id.author_text);
+            user_ratingbar = itemView.findViewById(R.id.author_ratingbar);
+            user_time = itemView.findViewById(R.id.author_time);
         }
     }
 }

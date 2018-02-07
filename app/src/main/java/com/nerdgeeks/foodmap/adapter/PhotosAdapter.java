@@ -9,13 +9,10 @@ import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
-
-import com.android.volley.toolbox.ImageLoader;
-import com.nerdgeeks.foodmap.app.AppController;
+import android.widget.ImageView;
 import com.nerdgeeks.foodmap.view.OnItemClickListener;
 import com.nerdgeeks.foodmap.R;
 import com.nerdgeeks.foodmap.model.PhotoModel;
-import com.nerdgeeks.foodmap.view.FadeInNetworkImageView;
 
 import java.util.ArrayList;
 
@@ -27,7 +24,6 @@ public class PhotosAdapter extends RecyclerView.Adapter<PhotosAdapter.ListHolder
     private ArrayList<PhotoModel> photoList = new ArrayList<>();
     private OnItemClickListener onItemClickListener;
     private Context mContext;
-    private ImageLoader mImageLoader = AppController.getInstance().getImageLoader();
     private int lastPosition = -1;
     private static final int TYPE_FULL = 0;
     private static final int TYPE_HALF = 1;
@@ -78,14 +74,9 @@ public class PhotosAdapter extends RecyclerView.Adapter<PhotosAdapter.ListHolder
     public void onBindViewHolder(final ListHolder holder, int position) {
 
         String imgUrl = photoList.get(position).getPhotoUrl();
-        holder.thumbView.setImageUrl(imgUrl,mImageLoader);
+        //holder.thumbView.setImageUrl(imgUrl,mImageLoader);
 
-        holder.thumbView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                onItemClickListener.onClick(view, holder.getAdapterPosition());
-            }
-        });
+        holder.thumbView.setOnClickListener(view -> onItemClickListener.onClick(view, holder.getAdapterPosition()));
         setAnimation(holder.itemView, position);
     }
 
@@ -121,12 +112,12 @@ public class PhotosAdapter extends RecyclerView.Adapter<PhotosAdapter.ListHolder
 
     class ListHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
         private  OnItemClickListener onItemClickListener;
-        private FadeInNetworkImageView thumbView;
+        private ImageView thumbView;
 
         ListHolder(View itemView, OnItemClickListener onItemClickListener) {
             super(itemView);
             this.onItemClickListener = onItemClickListener;
-            thumbView = (FadeInNetworkImageView) itemView.findViewById(R.id.photo_thumb);
+            thumbView = itemView.findViewById(R.id.photo_thumb);
         }
 
         @Override

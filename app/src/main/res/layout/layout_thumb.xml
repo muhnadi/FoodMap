@@ -10,7 +10,7 @@
     android:layout_gravity="center_horizontal"
     >
 
-    <com.nerdgeeks.foodmap.view.FadeInNetworkImageView
+    <ImageView
         android:id="@+id/photo_thumb"
         android:layout_width="match_parent"
         android:layout_height="@dimen/thumbnail_height"

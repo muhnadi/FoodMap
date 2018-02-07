@@ -31,7 +31,7 @@ public class ViewPagerAdapter extends PagerAdapter {
     public Object instantiateItem(ViewGroup viewGroup, int position){
         View view = inflater.inflate(R.layout.viewpage_item,viewGroup,false);
         assert view != null;
-        ImageView imageView = (ImageView) view.findViewById(R.id.full_image);
+        ImageView imageView = view.findViewById(R.id.full_image);
 
         PhotoModel photo = mImageList.get(position);
 
