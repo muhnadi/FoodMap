@@ -176,7 +176,7 @@ public class MainFragment extends Fragment implements OnLocationUpdatedListener,
             mTransaction.replace(R.id.frame_container, NearbyFragment.newInstance(mParam1));
             mTransaction.addToBackStack(null);
             mTransaction.commit();
-        }, 1000);
+        }, 2000);
     }
 
     private void startLocation(){

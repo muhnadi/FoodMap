@@ -140,29 +140,6 @@ public class ResultFragment extends Fragment implements
         }
     }
 
-//    private void loadData() {
-//
-//        //clear previous data
-//        mapList.clear();
-//
-//        try {
-//            if (isConnected) {
-//                loadNearByPlaces(lat, lng);
-//            } else {
-//                if (prefManager.isPrefAvailable()){
-//                    Toast.makeText(mContext, "Showing data from cache", Toast.LENGTH_SHORT).show();
-//                    setRecyclerAdapter(prefManager.readData());
-//                } else {
-//                    showSnackMessage(INTERNET_ERROR);
-//                }
-//                // stopping swipe refresh
-//                swipeRefreshLayout.setRefreshing(false);
-//            }
-//        } catch (Exception ex){
-//            showSnackMessage(ex.getMessage());
-//        }
-//    }
-
     private void loadData(){
 
         Location lastLocation = SmartLocation.with(getContext()).location().getLastLocation();
@@ -175,9 +152,9 @@ public class ResultFragment extends Fragment implements
         swipeRefreshLayout.setRefreshing(true);
 
         if(!isConnected){
-            if (prefManager.isPrefAvailable()){
+            if (prefManager.isPrefAvailable(type)){
                 Toast.makeText(mContext, "Showing data from cache", Toast.LENGTH_SHORT).show();
-                setRecyclerAdapter(prefManager.readData());
+                setRecyclerAdapter(prefManager.readData(type));
             } else {
                 showSnackMessage(INTERNET_ERROR);
             }
@@ -201,7 +178,7 @@ public class ResultFragment extends Fragment implements
                 AppData.placeModels = placeModels;
 
                 // Store the data for offline uses
-                prefManager.storeData(placeModels);
+                prefManager.storeData(placeModels,type);
 
                 // set the data to recyclerview
                 setRecyclerAdapter(placeModels);
@@ -217,229 +194,6 @@ public class ResultFragment extends Fragment implements
             }
         });
     }
-
-//    public void loadNearByPlaces(double lat, double lng) {
-//
-//        Location lastLocation = SmartLocation.with(getContext()).location().getLastLocation();
-//        if (lastLocation != null) {
-//            lat=lastLocation.getLatitude();
-//            lng= lastLocation.getLongitude();
-//        }
-//
-//        // showing refresh animation before making http call
-//        swipeRefreshLayout.setRefreshing(true);
-//
-//        final String googlePlacesUrl = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?" + "location="
-//                + lat
-//                + ","
-//                + lng +
-//                "&radius=1000"+
-//                "&type=" + type +
-//                "&sensor=false" +
-//                "&key=" + GOOGLE_MAP_API_KEY;
-//
-//        Toast.makeText(mContext, String.valueOf(lat)+"-"+String.valueOf(lng), Toast.LENGTH_SHORT).show();
-//
-//
-//        JsonObjectRequest request = new JsonObjectRequest(googlePlacesUrl,
-//
-//                result -> {
-//                    Log.i(TAG, "onResponse: Result= " + result.toString());
-//
-//                    String place_id, placeName, icon, vicinity, open, rating;
-//                    double latitude, longitude;
-//
-//                    try {
-//                        if (!result.isNull(NEXT_PAGE_TOKEN)) {
-//                            nextPageToken = result.getString(NEXT_PAGE_TOKEN);
-//                        }
-//                        JSONArray jsonArray = result.getJSONArray(RESULTS);
-//
-//                        if (result.getString(STATUS).equalsIgnoreCase(OK)) {
-//                            for (int i = 0; i < jsonArray.length(); i++) {
-//                                JSONObject place = jsonArray.getJSONObject(i);
-//
-//                                PlaceDeatilsModel mapModel = new PlaceDeatilsModel();
-//
-//                                place_id = place.getString(PLACE_ID);
-//                                placeId.add(place_id);
-//                                mapModel.setId(place_id);
-//
-//                                if (!place.isNull(NAME)) {
-//                                    placeName = place.getString(NAME);
-//                                    mapModel.setResName(placeName);
-//                                }
-//                                if (!place.isNull(VICINITY)) {
-//                                    vicinity = place.getString(VICINITY);
-//                                    mapModel.setResVicnity(vicinity);
-//                                }
-//
-//                                latitude = place.getJSONObject(GEOMETRY).getJSONObject(LOCATION)
-//                                        .getDouble(LATITUDE);
-//                                mapModel.setLatitude(latitude);
-//                                longitude = place.getJSONObject(GEOMETRY).getJSONObject(LOCATION)
-//                                        .getDouble(LONGITUDE);
-//                                mapModel.setLongitude(longitude);
-//
-//
-//                                if (!place.isNull(ICON)) {
-//                                    icon = place.getString(ICON);
-//                                    mapModel.setIconUrl(icon);
-//                                }
-//
-//                                if (!place.isNull(OPENING_HOURS)) {
-//                                    open = place.getJSONObject(OPENING_HOURS).getString(OPEN_NOW);
-//                                    mapModel.setResOpen(open);
-//                                }
-//
-//                                if (!place.isNull(RATE)) {
-//                                    rating = place.getString(RATE);
-//                                    mapModel.setResRating(rating);
-//                                }
-//
-//                                if (!place.isNull(PHOTOS)) {
-//                                    JSONArray photos = place.getJSONArray(PHOTOS);
-//                                    for (int j=0; j<photos.length(); j++){
-//                                        JSONObject photo_obj = photos.getJSONObject(j);
-//                                        if(!photo_obj.isNull(PHOTOS_REFERENCE)){
-//                                            String reference = photo_obj.getString(PHOTOS_REFERENCE);
-//                                            mapModel.setRef(reference);
-//                                        }
-//                                    }
-//                                }
-//
-//                                mapList.add(mapModel);
-//                            }
-//
-//                            if (!nextPageToken.isEmpty()){
-//                                new Handler().postDelayed(() -> nextPageLoad(),2000);
-//                            } else {
-//                                // stopping swipe refresh
-//                                swipeRefreshLayout.setRefreshing(false);
-//                                prefManager.storeData(mapList);
-//                                setRecyclerAdapter(mapList);
-//                            }
-//
-//                        } else {
-//                            // stopping swipe refresh
-//                            swipeRefreshLayout.setRefreshing(false);
-//                            showSnackMessage(NO_RESULTS);
-//                        }
-//                    } catch (JSONException e) {
-//                        e.printStackTrace();
-//                        // stopping swipe refresh
-//                        swipeRefreshLayout.setRefreshing(false);
-//                        showSnackMessage(e.getMessage());
-//                    }
-//
-//                },
-//                error -> {
-//                    // stopping swipe refresh
-//                    swipeRefreshLayout.setRefreshing(false);
-//                    showSnackMessage(error.getMessage());
-//                });
-//
-//        AppController.getInstance().addToRequestQueue(request);
-//    }
-//
-//    private void nextPageLoad() {
-//
-//        final String googlePlacesUrl = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?" +
-//                "pagetoken=" + nextPageToken +
-//                "&key=" + GOOGLE_MAP_API_KEY;
-//
-//        JsonObjectRequest request = new JsonObjectRequest(googlePlacesUrl,
-//
-//                result -> {
-//                    Log.i(TAG, "onResponse: Result= " + result.toString());
-//
-//                    String id, placeName, icon, vicinity, open, rating;
-//                    double latitude, longitude;
-//
-//                    try {
-//                        JSONArray jsonArray = result.getJSONArray(RESULTS);
-//
-//                        Toast.makeText(getActivity(), result.getString(STATUS), Toast.LENGTH_SHORT).show();
-//
-//                        if (result.getString(STATUS).equalsIgnoreCase(OK)) {
-//
-//                            for (int i = 0; i < jsonArray.length(); i++) {
-//                                JSONObject place = jsonArray.getJSONObject(i);
-//
-//                                PlaceDeatilsModel mapModel1 = new PlaceDeatilsModel();
-//
-//                                id = place.getString(PLACE_ID);
-//                                placeId.add(id);
-//                                mapModel1.setId(id);
-//
-//                                if (!place.isNull(NAME)) {
-//                                    placeName = place.getString(NAME);
-//                                    mapModel1.setResName(placeName);
-//                                }
-//                                if (!place.isNull(VICINITY)) {
-//                                    vicinity = place.getString(VICINITY);
-//                                    mapModel1.setResVicnity(vicinity);
-//                                }
-//
-//                                latitude = place.getJSONObject(GEOMETRY).getJSONObject(LOCATION)
-//                                        .getDouble(LATITUDE);
-//                                mapModel1.setLatitude(latitude);
-//                                longitude = place.getJSONObject(GEOMETRY).getJSONObject(LOCATION)
-//                                        .getDouble(LONGITUDE);
-//                                mapModel1.setLongitude(longitude);
-//
-//                                if (!place.isNull(ICON)) {
-//                                    icon = place.getString(ICON);
-//                                    mapModel1.setIconUrl(icon);
-//                                }
-//
-//                                if (!place.isNull(OPENING_HOURS)) {
-//                                    open = place.getJSONObject(OPENING_HOURS).getString(OPEN_NOW);
-//                                    mapModel1.setResOpen(open);
-//                                }
-//
-//                                if (!place.isNull(RATE)) {
-//                                    rating = place.getString(RATE);
-//                                    mapModel1.setResRating(rating);
-//                                }
-//
-//                                if (!place.isNull(PHOTOS)) {
-//                                    JSONArray photos = place.getJSONArray(PHOTOS);
-//                                    for (int j=0; j<photos.length(); j++){
-//                                        JSONObject photo_obj = photos.getJSONObject(j);
-//                                        if(!photo_obj.isNull(PHOTOS_REFERENCE)){
-//                                            String reference = photo_obj.getString(PHOTOS_REFERENCE);
-//                                            mapModel1.setRef(reference);
-//                                        }
-//                                    }
-//                                }
-//
-//                                mapList.add(mapModel1);
-//                            }
-//                        }
-//
-//                        // stopping swipe refresh
-//                        swipeRefreshLayout.setRefreshing(false);
-//                        prefManager.storeData(mapList);
-//                        setRecyclerAdapter(mapList);
-//
-//                        Toast.makeText(getActivity(), "Got " + mapAdapter.getItemCount() + " Results", Toast.LENGTH_SHORT).show();
-//                        Log.e(TAG, "Next Page:" + googlePlacesUrl);
-//
-//                    } catch (JSONException e) {
-//                        e.printStackTrace();
-//                        // stopping swipe refresh
-//                        swipeRefreshLayout.setRefreshing(false);
-//                        showSnackMessage(e.getMessage());
-//                    }
-//                },
-//                error -> {
-//                    // stopping swipe refresh
-//                    swipeRefreshLayout.setRefreshing(false);
-//                    showSnackMessage(error.getMessage());
-//                });
-//        AppController.getInstance().addToRequestQueue(request);
-//    }
 
     private OnItemClickListener recyclerRowClickListener = new OnItemClickListener() {
 
