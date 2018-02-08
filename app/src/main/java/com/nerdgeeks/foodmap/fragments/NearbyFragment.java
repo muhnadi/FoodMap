@@ -7,11 +7,12 @@ import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
-import android.location.Location;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -26,12 +27,20 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.nerdgeeks.foodmap.Api.ApiClient;
+import com.nerdgeeks.foodmap.Api.ApiInterface;
 import com.nerdgeeks.foodmap.R;
 import com.nerdgeeks.foodmap.activities.InfoActivity;
+import com.nerdgeeks.foodmap.app.AppData;
 import com.nerdgeeks.foodmap.app.PrefManager;
 import com.nerdgeeks.foodmap.helper.ConnectivityReceiver;
+import com.nerdgeeks.foodmap.model.PlaceModel;
+import com.nerdgeeks.foodmap.model.PlaceModelCall;
+
 import java.util.ArrayList;
-import io.nlopez.smartlocation.SmartLocation;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 import static com.nerdgeeks.foodmap.app.AppConfig.*;
 
@@ -50,11 +59,11 @@ public class NearbyFragment extends Fragment implements OnMapReadyCallback,
     private boolean isConnected;
     private SharedPreferences myPref;
     private double lat, lng;
-    private boolean isContain;
     private View snackView;
-    private ArrayList<String> placeId = new ArrayList<>();
     private Bitmap smallMarker;
-
+    private String type;
+    private ArrayList<PlaceModel> placeModels;
+    private Context mContext;
 
     public NearbyFragment() {
         // Required empty public constructor
@@ -68,8 +77,6 @@ public class NearbyFragment extends Fragment implements OnMapReadyCallback,
         return fragment;
     }
 
-    private Context mContext;
-
     // Initialise it from onAttach()
     @Override
     public void onAttach(Context context) {
@@ -80,6 +87,9 @@ public class NearbyFragment extends Fragment implements OnMapReadyCallback,
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if (getArguments() != null) {
+            type = getArguments().getString(ARG_PARAM1);
+        }
     }
 
     @Override
@@ -95,16 +105,11 @@ public class NearbyFragment extends Fragment implements OnMapReadyCallback,
         pDialog.setIndeterminate(false);
         pDialog.setCanceledOnTouchOutside(false);
 
+        myPref = mContext.getSharedPreferences("MyPref", Context.MODE_PRIVATE);
         isConnected = ConnectivityReceiver.isConnected();
 
-        myPref = mContext.getSharedPreferences("MyPref", Context.MODE_PRIVATE);
-
-        isContain = myPref.contains("lat");
-
-        if (isContain){
-            lat = Double.parseDouble(myPref.getString("lat",""));
-            lng = Double.parseDouble(myPref.getString("lng",""));
-        }
+        lat = AppData.lattitude;
+        lng = AppData.longitude;
 
         if (mMap == null) {
             getActivity().runOnUiThread(() -> {
@@ -114,12 +119,13 @@ public class NearbyFragment extends Fragment implements OnMapReadyCallback,
                 mapFragment.getMapAsync(NearbyFragment.this);
             });
         }
-
         return rootView;
     }
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
+
+        pDialog.show();
         mMap = googleMap;
 
         int height = 96;
@@ -128,62 +134,99 @@ public class NearbyFragment extends Fragment implements OnMapReadyCallback,
         Bitmap b = bitmapdraw.getBitmap();
         smallMarker = Bitmap.createScaledBitmap(b, width, height, false);
 
-        try{
-            if (isConnected) {
-                showLast( true);
+        if(!isConnected){
+            if (prefManager.isPrefAvailable(type)){
+                lat = Double.parseDouble(myPref.getString("lat",""));
+                lng = Double.parseDouble(myPref.getString("lng",""));
+                showDataIntoMap(prefManager.readData(type));
+                Toast.makeText(mContext, "You are offline. Showing last data from cache", Toast.LENGTH_SHORT).show();
             } else {
-                if (prefManager.isPrefAvailable()){
-                    showLast(false);
+                // stopping swipe refresh
+                pDialog.dismiss();
+                showSnackMessage(INTERNET_ERROR);
+            }
+            return;
+        }
+
+        if (AppData.placeModels.isEmpty()){
+            getDataFromServer();
+        } else {
+            showDataIntoMap(AppData.placeModels);
+        }
+    }
+
+    private void getDataFromServer(){
+        String latLng = lat+","+lng;
+        ApiInterface apiInterface = ApiClient.getClient().create(ApiInterface.class);
+        Call<PlaceModelCall> call = apiInterface.getNearbyPlaces(type,latLng,1000);
+        call.enqueue(new Callback<PlaceModelCall>() {
+            @Override
+            public void onResponse(@NonNull Call<PlaceModelCall> call, @NonNull Response<PlaceModelCall> response) {
+
+                placeModels = response.body().getResults();
+
+                Toast.makeText(mContext, response.body().getStatus(), Toast.LENGTH_SHORT).show();
+
+                SharedPreferences.Editor edit = myPref.edit();
+                edit.putString("lat", String.valueOf(AppData.lattitude));
+                edit.putString("lng", String.valueOf(AppData.longitude));
+                edit.apply();
+
+                if (response.body().getNextPageToken() != null){
+                    new Handler().postDelayed(() -> getNextPageDataFromServer(response.body().getNextPageToken()),2000);
                 } else {
-                    showSnackMessage(INTERNET_ERROR);
+                    // Store the data for offline uses
+                    prefManager.storeData(placeModels,type);
+                    // set this data to static Arraylist so that we can use it in our whole app
+                    AppData.placeModels = placeModels;
+                    //show the data into map
+                    showDataIntoMap(placeModels);
+
                 }
             }
-        } catch (Exception ex){
-            showSnackMessage(ex.getMessage());
-        }
+
+            @Override
+            public void onFailure(@NonNull Call<PlaceModelCall> call, @NonNull Throwable t) {
+                Log.d(TAG, "Json Api get failed");
+                // stopping swipe refresh
+                pDialog.dismiss();
+                showSnackMessage(t.getMessage());
+                //Toast.makeText(mContext, "Json Api get failed", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
-    private void startLocation() {
+    private void getNextPageDataFromServer (String pageToken){
+        ApiInterface apiInterface = ApiClient.getClient().create(ApiInterface.class);
+        Call<PlaceModelCall> call = apiInterface.getNextNearbyPlaces(pageToken);
+        call.enqueue(new Callback<PlaceModelCall>() {
+            @Override
+            public void onResponse(@NonNull Call<PlaceModelCall> call, @NonNull Response<PlaceModelCall> response) {
 
-//        long mLocTrackingInterval = 10000; // 5 sec
-//        float trackingDistance = 0f;
-//        LocationAccuracy trackingAccuracy = LocationAccuracy.HIGH;
-//
-//        LocationParams.Builder builder = new LocationParams.Builder()
-//                .setAccuracy(trackingAccuracy)
-//                .setDistance(trackingDistance)
-//                .setInterval(mLocTrackingInterval);
-//
-//        provider = new LocationGooglePlayServicesProvider();
-//        provider.setCheckLocationSettings(true);
-//        //SmartLocation smartLocation = new SmartLocation.Builder(mContext).logging(true).build();
-//        SmartLocation.with(mContext).location(provider).oneFix().config(builder.build()).start(this);
+                ArrayList<PlaceModel> nextPlaceModels = response.body().getResults();
+                placeModels.addAll(nextPlaceModels);
+
+                // Store the data for offline uses
+                prefManager.storeData(placeModels,type);
+                // set this data to static Arraylist so that we can use it in our whole app
+                AppData.placeModels = placeModels;
+                //show the data into map
+                showDataIntoMap(placeModels);
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<PlaceModelCall> call, @NonNull Throwable t) {
+                Log.d(TAG, "Json Api get failed");
+                // stopping swipe refresh
+                pDialog.dismiss();
+                showSnackMessage(t.getMessage());
+            }
+        });
     }
 
-//    @Override
-//    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-//        if (requestCode == LOCATION_PERMISSION_ID && grantResults.length > 0
-//                && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-//            startLocation();
-//        }
-//    }
-//
-//    @Override
-//    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-//        super.onActivityResult(requestCode, resultCode, data);
-//        if (provider != null) {
-//            provider.onActivityResult(requestCode, resultCode, data);
-//        }
-//    }
+    private void showDataIntoMap(ArrayList<PlaceModel> placeModels) {
 
-    private void showLast(boolean isNetwork) {
-
-        Location lastLocation = SmartLocation.with(getContext()).location().getLastLocation();
-        if (lastLocation != null) {
-            lat=lastLocation.getLatitude();
-            lng= lastLocation.getLongitude();
-            Toast.makeText(mContext, lat+"-"+lng, Toast.LENGTH_SHORT).show();
-        }
+        pDialog.dismiss();
 
         //zoom to current position:
         CameraPosition cameraPosition = new CameraPosition.Builder()
@@ -194,21 +237,16 @@ public class NearbyFragment extends Fragment implements OnMapReadyCallback,
         mMap.setInfoWindowAdapter(NearbyFragment.this);
         mMap.setOnInfoWindowClickListener(this);
 
-        if (isNetwork){
-            //loadNearByPlaces(lat, lng, mParam1);
-        } else {
-            for (int i=0; i<prefManager.readData().size(); i++) {
-                MarkerOptions markerOptions = new MarkerOptions();
-                LatLng latLng = new LatLng(prefManager.readData().get(i).getGeometry().getLocation().getLat(), prefManager.readData().get(i).getGeometry().getLocation().getLng());
-                markerOptions.position(latLng);
-                markerOptions.title(prefManager.readData().get(i).getName());
-                markerOptions.snippet(prefManager.readData().get(i).getVicinity() + "\nRatings : " + prefManager.readData().get(i).getRating());
-                Marker marker = mMap.addMarker(markerOptions);
-                marker.setIcon(BitmapDescriptorFactory.fromBitmap(smallMarker));
-                marker.showInfoWindow();
-            }
+        for (PlaceModel placeModel: placeModels) {
+            MarkerOptions markerOptions = new MarkerOptions();
+            LatLng latLng = new LatLng(placeModel.getGeometry().getLocation().getLat(), placeModel.getGeometry().getLocation().getLng());
+            markerOptions.position(latLng);
+            markerOptions.title(placeModel.getName());
+            markerOptions.snippet(placeModel.getVicinity() + "\nRatings : " + placeModel.getRating());
+            Marker marker = mMap.addMarker(markerOptions);
+            marker.setIcon(BitmapDescriptorFactory.fromBitmap(smallMarker));
+            marker.showInfoWindow();
         }
-
     }
 
     @Override
@@ -233,169 +271,6 @@ public class NearbyFragment extends Fragment implements OnMapReadyCallback,
         snackbar.show();
     }
 
-//    public void loadNearByPlaces(final double Latitude, final double Longitude, String type) {
-//
-//        pDialog.show();
-//
-//        final String googlePlacesUrl = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?" + "location="
-//                + Latitude
-//                + ","
-//                + Longitude +
-//                "&radius=1000"+
-//                "&type=" + type +
-//                "&sensor=false" +
-//                "&key=" + GOOGLE_MAP_API_KEY;
-//
-//        JsonObjectRequest request = new JsonObjectRequest(googlePlacesUrl,
-//
-//                result -> {
-//                    Log.i(TAG, "onResponse: Result= " + result.toString());
-//
-//                    String place_id, placeName = null, vicinity = null, rating=null;
-//                    double latitude, longitude;
-//
-//                    try {
-//                        if (!result.isNull(NEXT_PAGE_TOKEN)) {
-//                            nextPageToken = result.getString(NEXT_PAGE_TOKEN);
-//                        }
-//
-//                        JSONArray jsonArray = result.getJSONArray(RESULTS);
-//
-//                        if (result.getString(STATUS).equalsIgnoreCase(OK)) {
-//
-//                            for (int i = 0; i < jsonArray.length(); i++) {
-//                                JSONObject place = jsonArray.getJSONObject(i);
-//
-//                                place_id = place.getString(PLACE_ID);
-//                                placeId.add(place_id);
-//
-//                                if (!place.isNull(NAME)) {
-//                                    placeName = place.getString(NAME);
-//                                }
-//                                if (!place.isNull(VICINITY)) {
-//                                    vicinity = place.getString(VICINITY);
-//                                }
-//
-//                                if (!place.isNull(RATE)){
-//                                    rating = place.getString(RATE);
-//                                }
-//
-//                                latitude = place.getJSONObject(GEOMETRY).getJSONObject(LOCATION)
-//                                        .getDouble(LATITUDE);
-//                                longitude = place.getJSONObject(GEOMETRY).getJSONObject(LOCATION)
-//                                        .getDouble(LONGITUDE);
-//
-//                                MarkerOptions markerOptions = new MarkerOptions();
-//                                LatLng latLng = new LatLng(latitude, longitude);
-//                                markerOptions.position(latLng);
-//                                markerOptions.title(placeName);
-//                                markerOptions.snippet(vicinity + "\nRatings : " + rating);
-//
-//                                mMap.setInfoWindowAdapter(NearbyFragment.this);
-//
-//                                Marker marker = mMap.addMarker(markerOptions);
-//                                marker.setIcon(BitmapDescriptorFactory.fromBitmap(smallMarker));
-//                                marker.showInfoWindow();
-//                            }
-//                            if (nextPageToken != null) {
-//                                new Handler().postDelayed(() -> nextPageLoad(),2000);
-//                            } else {
-//                                pDialog.dismiss();
-//                            }
-//                        } else  {
-//                            pDialog.dismiss();
-//                            showSnackMessage(NO_RESULTS);
-//                        }
-//                    } catch (JSONException e) {
-//                        pDialog.dismiss();
-//                        showSnackMessage(e.getMessage());
-//                    }
-//
-//                },
-//                error -> {
-//                    pDialog.dismiss();
-//                    showSnackMessage(error.getMessage());
-//                });
-//
-//        AppController.getInstance().addToRequestQueue(request);
-//    }
-//
-//    private void nextPageLoad() {
-//
-//        final String googlePlacesUrl = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?" +
-//                "pagetoken=" + nextPageToken +
-//                "&key=" + GOOGLE_MAP_API_KEY;
-//
-//        JsonObjectRequest request = new JsonObjectRequest(googlePlacesUrl,
-//
-//                result -> {
-//                    Log.i(TAG, "onResponse: Result= " + result.toString());
-//
-//                    String placeName = null, place_id, vicinity = null, rating = null;
-//                    double latitude, longitude;
-//
-//                    try {
-//                        if (!result.isNull(NEXT_PAGE_TOKEN)) {
-//                            nextPageToken = result.getString(NEXT_PAGE_TOKEN);
-//                        }
-//                        JSONArray jsonArray = result.getJSONArray(RESULTS);
-//                        if (result.getString(STATUS).equalsIgnoreCase(OK)) {
-//                            for (int i = 0; i < jsonArray.length(); i++) {
-//                                JSONObject place = jsonArray.getJSONObject(i);
-//
-//                                if (!place.isNull(NAME)) {
-//                                    placeName = place.getString(NAME);
-//                                }
-//
-//                                place_id = place.getString(PLACE_ID);
-//                                placeId.add(place_id);
-//
-//                                if (!place.isNull(VICINITY)) {
-//                                    vicinity = place.getString(VICINITY);
-//                                }
-//                                if (!place.isNull(RATE)){
-//                                    rating = place.getString(RATE);
-//                                }
-//
-//                                latitude = place.getJSONObject(GEOMETRY).getJSONObject(LOCATION)
-//                                        .getDouble(LATITUDE);
-//                                longitude = place.getJSONObject(GEOMETRY).getJSONObject(LOCATION)
-//                                        .getDouble(LONGITUDE);
-//
-//                                MarkerOptions markerOptions = new MarkerOptions();
-//                                LatLng latLng = new LatLng(latitude, longitude);
-//                                markerOptions.position(latLng);
-//                                markerOptions.title(placeName);
-//                                markerOptions.snippet(vicinity + "\nRatings : " + rating);
-//
-//                                mMap.setInfoWindowAdapter(NearbyFragment.this);
-//
-//                                Marker marker = mMap.addMarker(markerOptions);
-//                                marker.setIcon(BitmapDescriptorFactory.fromBitmap(smallMarker));
-//                                marker.showInfoWindow();
-//                            }
-//
-//                            pDialog.dismiss();
-//                            Log.e(TAG, "Next Page:" + googlePlacesUrl);
-//                            showSnackMessage(MAP_UPDATED);
-//
-//                        } else {
-//                            pDialog.dismiss();
-//                            showSnackMessage(NO_RESULTS);
-//                        }
-//                    } catch (JSONException e) {
-//                        e.printStackTrace();
-//                        pDialog.dismiss();
-//                        showSnackMessage(e.getMessage());
-//                    }
-//                },
-//                error -> {
-//                    pDialog.dismiss();
-//                    showSnackMessage(error.getMessage());
-//                });
-//        AppController.getInstance().addToRequestQueue(request);
-//    }
-
     @Override
     public void onInfoWindowClick(Marker marker) {
 
@@ -407,7 +282,7 @@ public class NearbyFragment extends Fragment implements OnMapReadyCallback,
         int position = Integer.parseInt(marker.getId().replace("m", ""));
         Intent detailIntent = new Intent(getActivity(), InfoActivity.class);
         detailIntent.putExtra("position", position);
-        detailIntent.putExtra("placeId", placeId.get(position));
+        detailIntent.putExtra("placeId", placeModels.get(position).getPlaceId());
         detailIntent.putExtra("lat", lat);
         detailIntent.putExtra("lng", lng);
         startActivity(detailIntent);

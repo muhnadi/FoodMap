@@ -11,5 +11,7 @@ import java.util.ArrayList;
 public class AppData {
 
     public static ArrayList<PlaceModel> placeModels = new ArrayList<>();
+    public static Double lattitude;
+    public static Double longitude;
 
 }

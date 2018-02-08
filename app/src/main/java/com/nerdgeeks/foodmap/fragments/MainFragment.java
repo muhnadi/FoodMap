@@ -19,6 +19,8 @@ import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
+
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -30,6 +32,8 @@ import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResult;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.nerdgeeks.foodmap.R;
+import com.nerdgeeks.foodmap.app.AppData;
+
 import io.nlopez.smartlocation.OnLocationUpdatedListener;
 import io.nlopez.smartlocation.SmartLocation;
 import io.nlopez.smartlocation.location.config.LocationAccuracy;
@@ -169,7 +173,7 @@ public class MainFragment extends Fragment implements OnLocationUpdatedListener,
         startLocation();
         new Handler().postDelayed(() -> {
             FragmentTransaction mTransaction = getChildFragmentManager().beginTransaction();
-            mTransaction.replace(R.id.frame_container, ResultFragment.newInstance(mParam1));
+            mTransaction.replace(R.id.frame_container, NearbyFragment.newInstance(mParam1));
             mTransaction.addToBackStack(null);
             mTransaction.commit();
         }, 1000);
@@ -189,11 +193,10 @@ public class MainFragment extends Fragment implements OnLocationUpdatedListener,
 
     @Override
     public void onLocationUpdated(Location location) {
-        SharedPreferences myPref = mContext.getSharedPreferences("MyPref", Context.MODE_PRIVATE);
-        SharedPreferences.Editor edit = myPref.edit();
-        edit.putString("lat", String.valueOf(location.getLatitude()));
-        edit.putString("lng", String.valueOf(location.getLongitude()));
-        edit.apply();
+        AppData.lattitude = location.getLatitude();
+        AppData.longitude = location.getLongitude();
+
+        Toast.makeText(mContext, AppData.lattitude+"-"+AppData.longitude, Toast.LENGTH_SHORT).show();
     }
 
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener

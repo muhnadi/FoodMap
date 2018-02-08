@@ -15,9 +15,10 @@ public interface ApiInterface {
 
     String key = AppConfig.GOOGLE_MAP_API_KEY;
 
-//    @GET
-//    Call<PlaceModelCall> getPlaceModel(@Url String mUrl);
-
     @GET("api/place/nearbysearch/json?sensor=false&key="+key)
     Call<PlaceModelCall> getNearbyPlaces(@Query("type") String type, @Query("location") String location, @Query("radius") int radius);
+
+    @GET("api/place/nearbysearch/json?key="+key)
+    Call<PlaceModelCall> getNextNearbyPlaces(@Query("pagetoken") String pageToken);
+
 }
