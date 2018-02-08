@@ -5,7 +5,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
@@ -19,8 +18,6 @@ import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
-
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
@@ -34,7 +31,6 @@ import com.google.android.gms.location.LocationSettingsResult;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.nerdgeeks.foodmap.R;
 import com.nerdgeeks.foodmap.app.AppData;
-
 import io.nlopez.smartlocation.OnLocationUpdatedListener;
 import io.nlopez.smartlocation.SmartLocation;
 import io.nlopez.smartlocation.location.config.LocationAccuracy;
@@ -171,7 +167,6 @@ public class MainFragment extends Fragment implements OnLocationUpdatedListener,
             case REQUEST_LOCATION:
                 switch (resultCode) {
                     case Activity.RESULT_OK:
-                        startLocation();
                         loadDataFirstTime();
                         break;
                     case Activity.RESULT_CANCELED:
@@ -184,6 +179,7 @@ public class MainFragment extends Fragment implements OnLocationUpdatedListener,
 
 
     private void loadDataFirstTime(){
+        startLocation();
         new Handler().postDelayed(() -> {
             FragmentTransaction mTransaction = getChildFragmentManager().beginTransaction();
             mTransaction.replace(R.id.frame_container, NearbyFragment.newInstance(mParam1));

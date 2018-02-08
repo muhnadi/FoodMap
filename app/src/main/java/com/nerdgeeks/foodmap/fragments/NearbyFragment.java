@@ -7,6 +7,7 @@ import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
+import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
@@ -36,10 +37,9 @@ import com.nerdgeeks.foodmap.app.PrefManager;
 import com.nerdgeeks.foodmap.helper.ConnectivityReceiver;
 import com.nerdgeeks.foodmap.model.PlaceModel;
 import com.nerdgeeks.foodmap.model.PlaceModelCall;
-
 import java.util.ArrayList;
-import java.util.Arrays;
 
+import io.nlopez.smartlocation.SmartLocation;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -110,8 +110,16 @@ public class NearbyFragment extends Fragment implements OnMapReadyCallback,
         myPref = mContext.getSharedPreferences("MyPref", Context.MODE_PRIVATE);
         isConnected = ConnectivityReceiver.isConnected();
 
-        lat = AppData.lattitude;
-        lng = AppData.longitude;
+        try{
+            lat = AppData.lattitude;
+            lng = AppData.longitude;
+        } catch (Exception e){
+            Location location = SmartLocation.with(mContext).location().getLastLocation();
+            if (location != null) {
+                lat = location.getLatitude();
+                lng = location.getLongitude();
+            }
+        }
 
         if (mMap == null) {
             getActivity().runOnUiThread(() -> {
@@ -137,10 +145,10 @@ public class NearbyFragment extends Fragment implements OnMapReadyCallback,
         smallMarker = Bitmap.createScaledBitmap(b, width, height, false);
 
         if(!isConnected){
-            if (prefManager.isPrefAvailable()){
+            if (prefManager.isPrefAvailable(type)){
                 lat = Double.parseDouble(myPref.getString("lat",""));
                 lng = Double.parseDouble(myPref.getString("lng",""));
-                showDataIntoMap(prefManager.readData());
+                showDataIntoMap(prefManager.readData(type));
                 Toast.makeText(mContext, "You are offline. Showing last data from cache", Toast.LENGTH_SHORT).show();
             } else {
                 // stopping swipe refresh
@@ -160,7 +168,7 @@ public class NearbyFragment extends Fragment implements OnMapReadyCallback,
     private void getDataFromServer(){
         String latLng = lat+","+lng;
         ApiInterface apiInterface = ApiClient.getClient().create(ApiInterface.class);
-        Call<PlaceModelCall> call = apiInterface.getNearbyPlaces("restaurant|bar|cafe|grocery_or_supermarket|food|liquor_store",latLng,1000);
+        Call<PlaceModelCall> call = apiInterface.getNearbyPlaces(type,latLng,1000);
         call.enqueue(new Callback<PlaceModelCall>() {
             @Override
             public void onResponse(@NonNull Call<PlaceModelCall> call, @NonNull Response<PlaceModelCall> response) {
@@ -178,7 +186,7 @@ public class NearbyFragment extends Fragment implements OnMapReadyCallback,
                     new Handler().postDelayed(() -> getNextPageDataFromServer(response.body().getNextPageToken()),2000);
                 } else {
                     // Store the data for offline uses
-                    prefManager.storeData(placeModels);
+                    prefManager.storeData(placeModels,type);
                     // set this data to static Arraylist so that we can use it in our whole app
                     AppData.placeModels = placeModels;
                     //show the data into map
@@ -209,7 +217,7 @@ public class NearbyFragment extends Fragment implements OnMapReadyCallback,
                 placeModels.addAll(nextPlaceModels);
 
                 // Store the data for offline uses
-                prefManager.storeData(placeModels);
+                prefManager.storeData(placeModels,type);
                 // set this data to static Arraylist so that we can use it in our whole app
                 AppData.placeModels = placeModels;
                 //show the data into map
@@ -240,18 +248,14 @@ public class NearbyFragment extends Fragment implements OnMapReadyCallback,
         mMap.setOnInfoWindowClickListener(this);
 
         for (PlaceModel placeModel: placeModels) {
-            for (String t : placeModel.getTypes()){
-                if (t.equals(type)){
-                    MarkerOptions markerOptions = new MarkerOptions();
-                    LatLng latLng = new LatLng(placeModel.getGeometry().getLocation().getLat(), placeModel.getGeometry().getLocation().getLng());
-                    markerOptions.position(latLng);
-                    markerOptions.title(placeModel.getName());
-                    markerOptions.snippet(placeModel.getVicinity() + "\nRatings : " + placeModel.getRating());
-                    Marker marker = mMap.addMarker(markerOptions);
-                    marker.setIcon(BitmapDescriptorFactory.fromBitmap(smallMarker));
-                    marker.showInfoWindow();
-                }
-            }
+            MarkerOptions markerOptions = new MarkerOptions();
+            LatLng latLng = new LatLng(placeModel.getGeometry().getLocation().getLat(), placeModel.getGeometry().getLocation().getLng());
+            markerOptions.position(latLng);
+            markerOptions.title(placeModel.getName());
+            markerOptions.snippet(placeModel.getVicinity() + "\nRatings : " + placeModel.getRating());
+            Marker marker = mMap.addMarker(markerOptions);
+            marker.setIcon(BitmapDescriptorFactory.fromBitmap(smallMarker));
+            marker.showInfoWindow();
         }
     }
 

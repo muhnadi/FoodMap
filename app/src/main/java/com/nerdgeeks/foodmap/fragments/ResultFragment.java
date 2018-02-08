@@ -3,9 +3,7 @@ package com.nerdgeeks.foodmap.fragments;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.graphics.Color;
-import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
@@ -17,19 +15,12 @@ import android.support.v7.view.menu.MenuPopupHelper;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-import android.widget.Toast;
-
-import com.nerdgeeks.foodmap.Api.ApiClient;
-import com.nerdgeeks.foodmap.Api.ApiInterface;
 import com.nerdgeeks.foodmap.app.AppData;
 import com.nerdgeeks.foodmap.model.PlaceModel;
-import com.nerdgeeks.foodmap.model.PlaceModelCall;
 import com.nerdgeeks.foodmap.view.OnItemClickListener;
 import com.nerdgeeks.foodmap.R;
 import com.nerdgeeks.foodmap.activities.InfoActivity;
@@ -37,10 +28,6 @@ import com.nerdgeeks.foodmap.adapter.GMapsAdapter;
 import com.nerdgeeks.foodmap.app.PrefManager;
 import com.nerdgeeks.foodmap.helper.ConnectivityReceiver;
 import java.util.ArrayList;
-import io.nlopez.smartlocation.SmartLocation;
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
 
 import static com.nerdgeeks.foodmap.app.AppConfig.*;
 
@@ -142,13 +129,34 @@ public class ResultFragment extends Fragment implements
             menuHelper.show();
         });
 
+        mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener(){
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy){
+                if (dy > 0 && fab.isShown()){
+                    fab.hide();
+                }
+                else if(dy < 0) {
+                    fab.show();
+                }
+            }
+
+            @Override
+            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+
+                if ( newState == RecyclerView.SCROLL_STATE_IDLE){
+                    fab.show();
+                }
+                super.onScrollStateChanged(recyclerView, newState);
+            }
+        });
+
         return rootView;
     }
 
     private void onFilterAction(String s) {
         if (AppData.placeModels.isEmpty()) {
-            if (prefManager.isPrefAvailable()){
-                setRecyclerAdapter(filterByRating(prefManager.readData(), s));
+            if (prefManager.isPrefAvailable(type)){
+                setRecyclerAdapter(filterByRating(prefManager.readData(type), s));
             }
         } else {
             setRecyclerAdapter(filterByRating(AppData.placeModels, s));
@@ -188,8 +196,8 @@ public class ResultFragment extends Fragment implements
         swipeRefreshLayout.setRefreshing(true);
 
         if(!isConnected){
-            if (prefManager.isPrefAvailable()){
-                setRecyclerAdapter(prefManager.readData());
+            if (prefManager.isPrefAvailable(type)){
+                setRecyclerAdapter(prefManager.readData(type));
             } else {
                 showSnackMessage(INTERNET_ERROR);
                 swipeRefreshLayout.setRefreshing(false);
@@ -224,19 +232,10 @@ public class ResultFragment extends Fragment implements
         snackbar.show();
     }
 
-    private void setRecyclerAdapter(ArrayList<PlaceModel> placeModel){
+    private void setRecyclerAdapter(ArrayList<PlaceModel> placeModels){
 
         // stopping swipe refresh
         swipeRefreshLayout.setRefreshing(false);
-
-        ArrayList<PlaceModel> placeModels = new ArrayList<>();
-        for (PlaceModel place : placeModel){
-            for (String s : place.getTypes()){
-                if (s.equals(type)){
-                    placeModels.add(place);
-                }
-            }
-        }
 
         mapAdapter = new GMapsAdapter(placeModels, getActivity());
         mapAdapter.notifyDataSetChanged();

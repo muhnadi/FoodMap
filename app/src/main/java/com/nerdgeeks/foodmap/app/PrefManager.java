@@ -23,7 +23,7 @@ public class PrefManager {
 
     private static final String PREF_NAME = "foodmap";
 
-    private static final String MAP_ARRAY = "maplist";
+    //private static final String MAP_ARRAY = "maplist";
 
     public PrefManager(Context mContext) {
         this.mContext = mContext;
@@ -31,26 +31,26 @@ public class PrefManager {
         sharedPreferences = mContext.getSharedPreferences(PREF_NAME, PRIVATE_MODE);
     }
 
-    public void storeData(ArrayList<PlaceModel> arrayList){
+    public void storeData(ArrayList<PlaceModel> arrayList, String type){
 
         Editor editor = sharedPreferences.edit();
         Gson gson = new Gson();
 
-        if(sharedPreferences.contains(MAP_ARRAY)){
-            editor.remove(MAP_ARRAY);
+        if(sharedPreferences.contains(type)){
+            editor.remove(type);
         }
 
-        editor.putString(MAP_ARRAY,gson.toJson(arrayList));
+        editor.putString(type,gson.toJson(arrayList));
         editor.apply();
         Log.e(TAG,"Inserted");
     }
 
-    public ArrayList<PlaceModel> readData(){
+    public ArrayList<PlaceModel> readData(String type){
         List<PlaceModel> modelArrayList;
 
-        if(sharedPreferences.contains(MAP_ARRAY)){
+        if(sharedPreferences.contains(type)){
             Gson gson = new Gson();
-            String json = sharedPreferences.getString(MAP_ARRAY,null);
+            String json = sharedPreferences.getString(type,null);
             PlaceModel [] placeModels = gson.fromJson(json,PlaceModel[].class);
 
             modelArrayList = Arrays.asList(placeModels);
@@ -61,7 +61,7 @@ public class PrefManager {
         return (ArrayList<PlaceModel>) modelArrayList;
     }
 
-    public boolean isPrefAvailable(){
-        return sharedPreferences.contains(MAP_ARRAY);
+    public boolean isPrefAvailable(String type){
+        return sharedPreferences.contains(type);
     }
 }

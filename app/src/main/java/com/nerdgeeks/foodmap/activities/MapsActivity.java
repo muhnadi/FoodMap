@@ -25,6 +25,7 @@ import com.mikepenz.materialdrawer.DrawerBuilder;
 import com.mikepenz.materialdrawer.model.PrimaryDrawerItem;
 import com.mikepenz.materialdrawer.model.SectionDrawerItem;
 import com.nerdgeeks.foodmap.R;
+import com.nerdgeeks.foodmap.app.AppData;
 import com.nerdgeeks.foodmap.fragments.MainFragment;
 import com.nerdgeeks.foodmap.helper.ConnectivityReceiver;
 import com.nerdgeeks.foodmap.utils.InterstitialAdsHelper;
@@ -120,6 +121,10 @@ public class MapsActivity extends AppCompatActivity {
                 )
                 .withOnDrawerItemClickListener((view1, position, drawerItem) -> {
                     if (drawerItem != null) {
+
+                        if (!AppData.placeModels.isEmpty()){
+                            AppData.placeModels.clear();
+                        }
 
                         if (drawerItem.getIdentifier() == 1) {
                             toolbar.setSubtitle("Restaurants");
