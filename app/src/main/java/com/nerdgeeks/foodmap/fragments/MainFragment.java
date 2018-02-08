@@ -171,6 +171,7 @@ public class MainFragment extends Fragment implements OnLocationUpdatedListener,
             case REQUEST_LOCATION:
                 switch (resultCode) {
                     case Activity.RESULT_OK:
+                        startLocation();
                         loadDataFirstTime();
                         break;
                     case Activity.RESULT_CANCELED:
@@ -183,7 +184,6 @@ public class MainFragment extends Fragment implements OnLocationUpdatedListener,
 
 
     private void loadDataFirstTime(){
-        startLocation();
         new Handler().postDelayed(() -> {
             FragmentTransaction mTransaction = getChildFragmentManager().beginTransaction();
             mTransaction.replace(R.id.frame_container, NearbyFragment.newInstance(mParam1));
@@ -232,7 +232,6 @@ public class MainFragment extends Fragment implements OnLocationUpdatedListener,
     };
 
     private void loadFragment(Fragment mFragment){
-        startLocation();
         FragmentTransaction mTransaction = getChildFragmentManager().beginTransaction();
         mTransaction.replace(R.id.frame_container, mFragment);
         mTransaction.addToBackStack(null);

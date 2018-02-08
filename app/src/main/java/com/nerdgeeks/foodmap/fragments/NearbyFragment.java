@@ -38,6 +38,8 @@ import com.nerdgeeks.foodmap.model.PlaceModel;
 import com.nerdgeeks.foodmap.model.PlaceModelCall;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -135,10 +137,10 @@ public class NearbyFragment extends Fragment implements OnMapReadyCallback,
         smallMarker = Bitmap.createScaledBitmap(b, width, height, false);
 
         if(!isConnected){
-            if (prefManager.isPrefAvailable(type)){
+            if (prefManager.isPrefAvailable()){
                 lat = Double.parseDouble(myPref.getString("lat",""));
                 lng = Double.parseDouble(myPref.getString("lng",""));
-                showDataIntoMap(prefManager.readData(type));
+                showDataIntoMap(prefManager.readData());
                 Toast.makeText(mContext, "You are offline. Showing last data from cache", Toast.LENGTH_SHORT).show();
             } else {
                 // stopping swipe refresh
@@ -158,7 +160,7 @@ public class NearbyFragment extends Fragment implements OnMapReadyCallback,
     private void getDataFromServer(){
         String latLng = lat+","+lng;
         ApiInterface apiInterface = ApiClient.getClient().create(ApiInterface.class);
-        Call<PlaceModelCall> call = apiInterface.getNearbyPlaces(type,latLng,1000);
+        Call<PlaceModelCall> call = apiInterface.getNearbyPlaces("restaurant|bar|cafe|grocery_or_supermarket|food|liquor_store",latLng,1000);
         call.enqueue(new Callback<PlaceModelCall>() {
             @Override
             public void onResponse(@NonNull Call<PlaceModelCall> call, @NonNull Response<PlaceModelCall> response) {
@@ -176,7 +178,7 @@ public class NearbyFragment extends Fragment implements OnMapReadyCallback,
                     new Handler().postDelayed(() -> getNextPageDataFromServer(response.body().getNextPageToken()),2000);
                 } else {
                     // Store the data for offline uses
-                    prefManager.storeData(placeModels,type);
+                    prefManager.storeData(placeModels);
                     // set this data to static Arraylist so that we can use it in our whole app
                     AppData.placeModels = placeModels;
                     //show the data into map
@@ -207,7 +209,7 @@ public class NearbyFragment extends Fragment implements OnMapReadyCallback,
                 placeModels.addAll(nextPlaceModels);
 
                 // Store the data for offline uses
-                prefManager.storeData(placeModels,type);
+                prefManager.storeData(placeModels);
                 // set this data to static Arraylist so that we can use it in our whole app
                 AppData.placeModels = placeModels;
                 //show the data into map
@@ -238,14 +240,18 @@ public class NearbyFragment extends Fragment implements OnMapReadyCallback,
         mMap.setOnInfoWindowClickListener(this);
 
         for (PlaceModel placeModel: placeModels) {
-            MarkerOptions markerOptions = new MarkerOptions();
-            LatLng latLng = new LatLng(placeModel.getGeometry().getLocation().getLat(), placeModel.getGeometry().getLocation().getLng());
-            markerOptions.position(latLng);
-            markerOptions.title(placeModel.getName());
-            markerOptions.snippet(placeModel.getVicinity() + "\nRatings : " + placeModel.getRating());
-            Marker marker = mMap.addMarker(markerOptions);
-            marker.setIcon(BitmapDescriptorFactory.fromBitmap(smallMarker));
-            marker.showInfoWindow();
+            for (String t : placeModel.getTypes()){
+                if (t.equals(type)){
+                    MarkerOptions markerOptions = new MarkerOptions();
+                    LatLng latLng = new LatLng(placeModel.getGeometry().getLocation().getLat(), placeModel.getGeometry().getLocation().getLng());
+                    markerOptions.position(latLng);
+                    markerOptions.title(placeModel.getName());
+                    markerOptions.snippet(placeModel.getVicinity() + "\nRatings : " + placeModel.getRating());
+                    Marker marker = mMap.addMarker(markerOptions);
+                    marker.setIcon(BitmapDescriptorFactory.fromBitmap(smallMarker));
+                    marker.showInfoWindow();
+                }
+            }
         }
     }
 

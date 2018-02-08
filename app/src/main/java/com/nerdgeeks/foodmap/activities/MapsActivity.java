@@ -126,7 +126,7 @@ public class MapsActivity extends AppCompatActivity {
                             fragment = MainFragment
                                     .newInstance("restaurant");
                             fragmentTransaction = getSupportFragmentManager().beginTransaction();
-                            fragmentTransaction.replace(R.id.fragment_container, fragment).commitAllowingStateLoss();
+                            fragmentTransaction.replace(R.id.fragment_container, fragment).commit();
                         } else if (drawerItem.getIdentifier() == 2) {
                             toolbar.setSubtitle("Bars");
                             fragment = MainFragment

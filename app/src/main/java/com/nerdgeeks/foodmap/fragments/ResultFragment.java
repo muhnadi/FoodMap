@@ -147,8 +147,8 @@ public class ResultFragment extends Fragment implements
 
     private void onFilterAction(String s) {
         if (AppData.placeModels.isEmpty()) {
-            if (prefManager.isPrefAvailable(type)){
-                setRecyclerAdapter(filterByRating(prefManager.readData(type), s));
+            if (prefManager.isPrefAvailable()){
+                setRecyclerAdapter(filterByRating(prefManager.readData(), s));
             }
         } else {
             setRecyclerAdapter(filterByRating(AppData.placeModels, s));
@@ -188,8 +188,8 @@ public class ResultFragment extends Fragment implements
         swipeRefreshLayout.setRefreshing(true);
 
         if(!isConnected){
-            if (prefManager.isPrefAvailable(type)){
-                setRecyclerAdapter(prefManager.readData(type));
+            if (prefManager.isPrefAvailable()){
+                setRecyclerAdapter(prefManager.readData());
             } else {
                 showSnackMessage(INTERNET_ERROR);
                 swipeRefreshLayout.setRefreshing(false);
@@ -224,10 +224,19 @@ public class ResultFragment extends Fragment implements
         snackbar.show();
     }
 
-    private void setRecyclerAdapter(ArrayList<PlaceModel> placeModels){
+    private void setRecyclerAdapter(ArrayList<PlaceModel> placeModel){
 
         // stopping swipe refresh
         swipeRefreshLayout.setRefreshing(false);
+
+        ArrayList<PlaceModel> placeModels = new ArrayList<>();
+        for (PlaceModel place : placeModel){
+            for (String s : place.getTypes()){
+                if (s.equals(type)){
+                    placeModels.add(place);
+                }
+            }
+        }
 
         mapAdapter = new GMapsAdapter(placeModels, getActivity());
         mapAdapter.notifyDataSetChanged();
