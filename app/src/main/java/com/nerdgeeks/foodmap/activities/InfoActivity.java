@@ -18,7 +18,6 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -30,18 +29,12 @@ import android.widget.TextView;
 import android.widget.Toast;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
-import com.google.android.gms.maps.model.LatLng;
-import com.nerdgeeks.foodmap.app.AppController;
 import com.nerdgeeks.foodmap.R;
 import com.nerdgeeks.foodmap.adapter.TabsAdapter;
 import com.nerdgeeks.foodmap.fragments.MapFragment;
-import com.nerdgeeks.foodmap.fragments.PhotosFragment;
 import com.nerdgeeks.foodmap.fragments.ReviewsFragment;
 import com.nerdgeeks.foodmap.model.TabsItem;
-import com.squareup.picasso.Picasso;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.List;
 import it.neokree.materialtabs.MaterialTab;
@@ -49,8 +42,6 @@ import it.neokree.materialtabs.MaterialTabHost;
 import it.neokree.materialtabs.MaterialTabListener;
 import uk.co.chrisjenx.calligraphy.CalligraphyConfig;
 import uk.co.chrisjenx.calligraphy.CalligraphyContextWrapper;
-
-import static com.nerdgeeks.foodmap.app.AppConfig.*;
 
 public class InfoActivity extends AppCompatActivity implements MaterialTabListener {
 
@@ -199,7 +190,6 @@ public class InfoActivity extends AppCompatActivity implements MaterialTabListen
 
     private void createTabsItem() {
         mTabs.add(new TabsItem(MapFragment.newInstance(placeId,Latitude,Longitude)));
-        mTabs.add(new TabsItem(PhotosFragment.newInstance(placeId, "")));
         mTabs.add(new TabsItem(ReviewsFragment.newInstance(placeId, "")));
     }
 

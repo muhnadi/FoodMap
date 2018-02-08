@@ -1,4 +1,4 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/fragment_list"
@@ -30,5 +30,17 @@
         android:padding="10dp"
         android:src="@drawable/powered_by_google" />
 
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/filterAction"
+        android:layout_margin="16dp"
+        app:elevation="8dp"
+        app:borderWidth="1dp"
+        app:fabSize="normal"
+        android:src="@drawable/btn_filter"
+        app:backgroundTint="@color/colorPrimary"
+        android:layout_gravity="end|bottom"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
 
-</FrameLayout>
+
+</android.support.design.widget.CoordinatorLayout>

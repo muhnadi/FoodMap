@@ -93,9 +93,6 @@
             android:name="com.nerdgeeks.foodmap.activities.InfoActivity" />
         <activity
             android:screenOrientation="portrait"
-            android:name="com.nerdgeeks.foodmap.activities.FullImageActivity"/>
-        <activity
-            android:screenOrientation="portrait"
             android:name="com.nerdgeeks.foodmap.activities.WebActivity"/>
 
         <activity android:name="com.google.android.gms.ads.AdActivity"

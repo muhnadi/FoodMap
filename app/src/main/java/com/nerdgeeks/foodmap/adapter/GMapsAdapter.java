@@ -95,7 +95,7 @@ public class GMapsAdapter extends RecyclerView.Adapter<GMapsAdapter.ListHolder> 
 
         Picasso.with(mContext).load(mapListModels.get(position).getIcon()).into(holder.iconView);
 
-        holder.cardView.setCardBackgroundColor(Color.BLACK);
+        holder.cardView.setCardBackgroundColor(Color.WHITE);
 
         if (isEnabled){
             //holder.cardView.setOnClickListener(view -> onItemClickListener.onClick(view, position));
@@ -180,9 +180,7 @@ public class GMapsAdapter extends RecyclerView.Adapter<GMapsAdapter.ListHolder> 
         private OnItemClickListener onItemClickListener;
         private CardView cardView;
         private ImageView iconView;
-        private ImageView thumb;
         private RatingBar ratingBar;
-        private View mRelative;
 
         ListHolder(View itemView, OnItemClickListener onItemClickListener) {
             super(itemView);
@@ -195,8 +193,6 @@ public class GMapsAdapter extends RecyclerView.Adapter<GMapsAdapter.ListHolder> 
             tOpen = itemView.findViewById(R.id.nOpen);
             iconView = itemView.findViewById(R.id.icon);
             ratingBar = itemView.findViewById(R.id.rate);
-            thumb = itemView.findViewById(R.id.thumbnails);
-            mRelative = itemView.findViewById(R.id.thumbHolder);
         }
 
         @Override

@@ -1,5 +1,6 @@
 package com.nerdgeeks.foodmap.fragments;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -7,13 +8,18 @@ import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.view.menu.MenuBuilder;
+import android.support.v7.view.menu.MenuPopupHelper;
 import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
@@ -48,12 +54,9 @@ public class ResultFragment extends Fragment implements
 
     private GMapsAdapter mapAdapter;
     private RecyclerView mRecyclerView;
-    private String nextPageToken = "";
     private PrefManager prefManager;
     private boolean isConnected;
-    private double lat, lng;
     private View snackView;
-    private ArrayList<String> placeId = new ArrayList<>();
 
     public ResultFragment() {
         // Required empty public constructor
@@ -84,6 +87,7 @@ public class ResultFragment extends Fragment implements
         mContext = context;
     }
 
+    @SuppressLint("RestrictedApi")
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -94,19 +98,6 @@ public class ResultFragment extends Fragment implements
         prefManager = new PrefManager(getContext());
         isConnected = ConnectivityReceiver.isConnected();
 
-        SharedPreferences myPref = mContext.getSharedPreferences("MyPref", Context.MODE_PRIVATE);
-
-        boolean isContain = myPref.contains("lat");
-
-        if (isContain) {
-            try {
-                lat = Double.valueOf(myPref.getString("lat", ""));
-                lng = Double.valueOf(myPref.getString("lng", ""));
-            } catch (NumberFormatException ex) {
-                showSnackMessage(ex.getMessage());
-            }
-        }
-
         //Adding RecyclerView
         mRecyclerView = rootView.findViewById(R.id.recyclerView);
         LinearLayoutManager layoutManager = new LinearLayoutManager(getContext());
@@ -116,10 +107,66 @@ public class ResultFragment extends Fragment implements
 
         swipeRefreshLayout = rootView.findViewById(R.id.swipe);
         swipeRefreshLayout.setOnRefreshListener(this);
-        swipeRefreshLayout.post(() -> loadData());
+        swipeRefreshLayout.post(this::loadData);
+
+        final FloatingActionButton fab = rootView.findViewById(R.id.filterAction);
+        fab.setOnClickListener(view -> {
+            PopupMenu popup = new PopupMenu(mContext, view);
+            popup.getMenuInflater().inflate(R.menu.popup_menu, popup.getMenu());
+
+            MenuPopupHelper menuHelper = new MenuPopupHelper(mContext, (MenuBuilder) popup.getMenu(), view);
+            menuHelper.setForceShowIcon(true);
+
+            popup.setOnMenuItemClickListener(item -> {
+                switch (item.getItemId()){
+                    case 0:
+                        onFilterAction(item.toString());
+                        break;
+                    case 1:
+                        onFilterAction(item.toString());
+                        break;
+                    case 2:
+                        onFilterAction(item.toString());
+                        break;
+                    case 3:
+                        onFilterAction(item.toString());
+                        break;
+                    case 4:
+                        onFilterAction(item.toString());
+                        break;
+                    default:
+                        break;
+                }
+                return true;
+            });
+            menuHelper.show();
+        });
 
         return rootView;
     }
+
+    private void onFilterAction(String s) {
+        if (AppData.placeModels.isEmpty()) {
+            if (prefManager.isPrefAvailable(type)){
+                setRecyclerAdapter(filterByRating(prefManager.readData(type), s));
+            }
+        } else {
+            setRecyclerAdapter(filterByRating(AppData.placeModels, s));
+        }
+    }
+
+    private ArrayList<PlaceModel> filterByRating(ArrayList<PlaceModel> models, String query) {
+
+        final ArrayList<PlaceModel> filteredModelList = new ArrayList<>();
+        for (PlaceModel model : models) {
+            String rating = model.getRating().toString().split("\\.")[0];
+            if (rating.equals(query)) {
+                filteredModelList.add(model);
+            }
+        }
+        return filteredModelList;
+    }
+
 
     @Override
     public void onPause() {
@@ -133,80 +180,31 @@ public class ResultFragment extends Fragment implements
 
     @Override
     public void onRefresh() {
-        if (AppData.placeModels.isEmpty()) {
-            loadData();
-        } else {
-            setRecyclerAdapter(AppData.placeModels);
-        }
+        loadData();
     }
 
     private void loadData(){
-
-        Location lastLocation = SmartLocation.with(getContext()).location().getLastLocation();
-        if (lastLocation != null) {
-            lat=lastLocation.getLatitude();
-            lng= lastLocation.getLongitude();
-        }
-
         // showing refresh animation before making http call
         swipeRefreshLayout.setRefreshing(true);
 
         if(!isConnected){
             if (prefManager.isPrefAvailable(type)){
-                Toast.makeText(mContext, "Showing data from cache", Toast.LENGTH_SHORT).show();
                 setRecyclerAdapter(prefManager.readData(type));
             } else {
                 showSnackMessage(INTERNET_ERROR);
-            }
-            // stopping swipe refresh
-            swipeRefreshLayout.setRefreshing(false);
-            return;
-        }
-
-        String latLng = lat+","+lng;
-        ApiInterface apiInterface = ApiClient.getClient().create(ApiInterface.class);
-        Call<PlaceModelCall> call = apiInterface.getNearbyPlaces(type,latLng,1000);
-        call.enqueue(new Callback<PlaceModelCall>() {
-            @Override
-            public void onResponse(@NonNull Call<PlaceModelCall> call, @NonNull Response<PlaceModelCall> response) {
-
-                ArrayList<PlaceModel> placeModels = response.body().getResults();
-
-                Toast.makeText(mContext, response.body().getStatus(), Toast.LENGTH_SHORT).show();
-
-                // set this data to static Arraylist so that we can use it in our whole app
-                AppData.placeModels = placeModels;
-
-                // Store the data for offline uses
-                prefManager.storeData(placeModels,type);
-
-                // set the data to recyclerview
-                setRecyclerAdapter(placeModels);
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<PlaceModelCall> call, @NonNull Throwable t) {
-                Log.d(TAG, "Json Api get failed");
-                // stopping swipe refresh
                 swipeRefreshLayout.setRefreshing(false);
-                showSnackMessage(t.getMessage());
-                //Toast.makeText(mContext, "Json Api get failed", Toast.LENGTH_SHORT).show();
             }
-        });
+        } else {
+            setRecyclerAdapter(AppData.placeModels);
+        }
     }
 
-    private OnItemClickListener recyclerRowClickListener = new OnItemClickListener() {
+    private OnItemClickListener recyclerRowClickListener = (v, position) -> {
 
-        @Override
-        public void onClick(View v, int position) {
-
-            Intent detailIntent = new Intent(getActivity(), InfoActivity.class);
-            detailIntent.putExtra("position", position);
-            detailIntent.putExtra("placeId", placeId.get(position));
-            detailIntent.putExtra("lat", lat);
-            detailIntent.putExtra("lng", lng);
-            startActivity(detailIntent);
-        }
+        Intent detailIntent = new Intent(getActivity(), InfoActivity.class);
+        detailIntent.putExtra("position", position);
+        detailIntent.putExtra("placeId", AppData.placeModels.get(position).getPlaceId());
+        startActivity(detailIntent);
     };
 
     @Override
@@ -239,7 +237,6 @@ public class ResultFragment extends Fragment implements
             mapAdapter.setOnItemClickListener(recyclerRowClickListener);
         } else {
             mapAdapter.isOnItemClickListener(false);
-            showSnackMessage(INTERNET_ERROR);
         }
         mRecyclerView.setAdapter(mapAdapter);
     }
