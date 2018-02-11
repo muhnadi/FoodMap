@@ -19,6 +19,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+
+import com.nerdgeeks.foodmap.adapter.GMapsAdapterWithAds;
 import com.nerdgeeks.foodmap.app.AppData;
 import com.nerdgeeks.foodmap.model.PlaceModel;
 import com.nerdgeeks.foodmap.view.OnItemClickListener;
@@ -39,7 +41,6 @@ public class ResultFragment extends Fragment implements
     private String type;
     private SwipeRefreshLayout swipeRefreshLayout;
 
-    private GMapsAdapter mapAdapter;
     private RecyclerView mRecyclerView;
     private PrefManager prefManager;
     private boolean isConnected;
@@ -198,6 +199,7 @@ public class ResultFragment extends Fragment implements
         if(!isConnected){
             if (prefManager.isPrefAvailable(type)){
                 setRecyclerAdapter(prefManager.readData(type));
+                showSnackMessage("You are offline. Showing last data from cache");
             } else {
                 showSnackMessage(INTERNET_ERROR);
                 swipeRefreshLayout.setRefreshing(false);
@@ -211,7 +213,6 @@ public class ResultFragment extends Fragment implements
 
         Intent detailIntent = new Intent(getActivity(), InfoActivity.class);
         detailIntent.putExtra("position", position);
-        detailIntent.putExtra("placeId", AppData.placeModels.get(position).getPlaceId());
         startActivity(detailIntent);
     };
 
@@ -237,7 +238,7 @@ public class ResultFragment extends Fragment implements
         // stopping swipe refresh
         swipeRefreshLayout.setRefreshing(false);
 
-        mapAdapter = new GMapsAdapter(placeModels, getActivity());
+        GMapsAdapterWithAds mapAdapter = new GMapsAdapterWithAds(placeModels,getActivity());
         mapAdapter.notifyDataSetChanged();
         //Nearby restaurant List added to RecyclerView
         if (isConnected){

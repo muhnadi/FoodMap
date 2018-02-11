@@ -19,14 +19,12 @@ import java.util.List;
 public class PrefManager {
     public static final String TAG = PrefManager.class.getSimpleName();
     private SharedPreferences sharedPreferences;
-    private Context mContext;
 
     private static final String PREF_NAME = "foodmap";
 
     //private static final String MAP_ARRAY = "maplist";
 
     public PrefManager(Context mContext) {
-        this.mContext = mContext;
         int PRIVATE_MODE = 0;
         sharedPreferences = mContext.getSharedPreferences(PREF_NAME, PRIVATE_MODE);
     }

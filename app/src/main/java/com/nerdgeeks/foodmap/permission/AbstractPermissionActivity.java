@@ -10,7 +10,6 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
-
 import java.util.ArrayList;
 
 abstract public class AbstractPermissionActivity extends AppCompatActivity {
@@ -39,17 +38,12 @@ abstract public class AbstractPermissionActivity extends AppCompatActivity {
         else if (!isInPermission) {
             isInPermission=true;
 
-            ActivityCompat
-                    .requestPermissions(this,
-                            netPermissions(getDesiredPermissions()),
-                            REQUEST_PERMISSION);
+            ActivityCompat.requestPermissions(this, netPermissions(getDesiredPermissions()), REQUEST_PERMISSION);
         }
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode,
-                                           @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
 
         isInPermission=false;
 

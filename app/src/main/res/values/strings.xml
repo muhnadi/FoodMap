@@ -3,9 +3,11 @@
     <string name="title_activity_maps">Map</string>
 
 
+    <!--&lt;!&ndash; Test Admob AdsPlace ID&ndash;&gt;-->
     <!--<string name="Banner_test">ca-app-pub-3940256099942544/63009781111</string>-->
     <!--<string name="Interstitial_test">ca-app-pub-3940256099942544/10331737122</string>-->
 
+    <!-- NerdGeeks Admob AdsPlace ID-->
     <string name="Banner_test">ca-app-pub-9551927371844997/7114190065</string>
     <string name="Interstitial_test">ca-app-pub-9551927371844997/4381049666</string>
 
@@ -22,5 +24,6 @@
     <string name="notif_text">I\'ll be watching you</string>
     <string name="title_near">Nearby Map</string>
     <string name="title_list">List</string>
+    <string name="nerdgeeks_developer">© NerdGeeks Developer</string>
 
 </resources>

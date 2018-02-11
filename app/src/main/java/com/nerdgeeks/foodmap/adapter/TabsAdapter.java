@@ -3,14 +3,11 @@ package com.nerdgeeks.foodmap.adapter;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
-
-
 import com.nerdgeeks.foodmap.model.TabsItem;
-
 import java.util.List;
 
 /**
- * Created by hp on 12/5/2016.
+ * Created by TAOHID on 12/5/2016.
  */
 public class TabsAdapter extends FragmentStatePagerAdapter {
     private List<TabsItem> mTabs;

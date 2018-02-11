@@ -3,9 +3,11 @@ package com.nerdgeeks.foodmap.activities;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
@@ -16,21 +18,24 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
+import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
-import com.facebook.ads.AdView;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
 import com.google.android.gms.analytics.GoogleAnalytics;
 import com.google.android.gms.analytics.Tracker;
 import com.mikepenz.materialdrawer.Drawer;
 import com.mikepenz.materialdrawer.DrawerBuilder;
 import com.mikepenz.materialdrawer.model.PrimaryDrawerItem;
 import com.mikepenz.materialdrawer.model.SectionDrawerItem;
+import com.nerdgeeks.foodmap.BuildConfig;
 import com.nerdgeeks.foodmap.R;
 import com.nerdgeeks.foodmap.app.AppData;
 import com.nerdgeeks.foodmap.fragments.MainFragment;
-import com.nerdgeeks.foodmap.helper.ConnectivityReceiver;
 import com.nerdgeeks.foodmap.utils.InterstitialAdsHelper;
 import java.io.File;
-import java.util.Random;
+
 import uk.co.chrisjenx.calligraphy.CalligraphyConfig;
 import uk.co.chrisjenx.calligraphy.CalligraphyContextWrapper;
 
@@ -40,12 +45,10 @@ public class MapsActivity extends AppCompatActivity {
     private Fragment fragment;
     private FragmentTransaction fragmentTransaction;
     private Toolbar toolbar;
-    private boolean isConnected, isGpsEnabled;
     private int resumeCount;
     int adsDelay = 30000;
     private InterstitialAdsHelper interstitialAdsHelper;
     Drawer drawer;
-
 
     @Override
     protected void attachBaseContext(Context newBase) {
@@ -73,9 +76,6 @@ public class MapsActivity extends AppCompatActivity {
         tracker.enableExceptionReporting(true);
         tracker.enableAdvertisingIdCollection(true);
         tracker.enableAutoActivityTracking(true);
-
-        isConnected = ConnectivityReceiver.isConnected();
-        isGpsEnabled = ConnectivityReceiver.isGPSConnected();
 
         toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -164,21 +164,7 @@ public class MapsActivity extends AppCompatActivity {
                                         Uri.parse("http://play.google.com/store/apps/details?id=" + getApplicationContext().getPackageName())));
                             }
                         } else if (drawerItem.getIdentifier() == 6) {
-                            new MaterialDialog.Builder(MapsActivity.this)
-                                    .title("About Developer")
-                                    .customView(R.layout.about, true)
-                                    .positiveText("MORE APPS")
-                                    .onPositive((dialog, which) -> {
-                                        Uri uri = Uri.parse("market://search?q=pub:" + "NerdGeeks");
-                                        Intent goToMarket = new Intent(Intent.ACTION_VIEW, uri);
-                                        try {
-                                            startActivity(goToMarket);
-                                        } catch (ActivityNotFoundException e) {
-                                            startActivity(new Intent(Intent.ACTION_VIEW,
-                                                    Uri.parse("http://play.google.com/store/search?q=pub:" + "NerdGeeks")));
-                                        }
-                                    })
-                                    .show();
+                            aboutMyApp();
                         }
                     }
                     return false;
@@ -187,12 +173,43 @@ public class MapsActivity extends AppCompatActivity {
         drawer.setSelection(1,true);
     }
 
+    private void aboutMyApp() {
+
+        MaterialDialog.Builder bulder = new MaterialDialog.Builder(this)
+                .title(R.string.app_name)
+                .customView(R.layout.about, true)
+                .backgroundColor(getResources().getColor(R.color.snippetBackground))
+                .titleColorRes(android.R.color.white)
+                .positiveText("MORE APPS")
+                .positiveColor(getResources().getColor(android.R.color.white))
+                .icon(getResources().getDrawable(R.drawable.ic_splash))
+                .onPositive((dialog, which) -> {
+                    Uri uri = Uri.parse("market://search?q=pub:" + "NerdGeeks");
+                    Intent goToMarket = new Intent(Intent.ACTION_VIEW, uri);
+                    try {
+                        startActivity(goToMarket);
+                    } catch (ActivityNotFoundException e) {
+                        startActivity(new Intent(Intent.ACTION_VIEW,
+                                Uri.parse("http://play.google.com/store/search?q=pub:" + "NerdGeeks")));
+                    }
+                });
+
+        MaterialDialog materialDialog = bulder.build();
+
+        TextView versionCode = (TextView) materialDialog.findViewById(R.id.version_code);
+        TextView versionName = (TextView) materialDialog.findViewById(R.id.version_name);
+        versionCode.setText(String.valueOf("vCode : " + BuildConfig.VERSION_CODE));
+        versionName.setText("vName : " + BuildConfig.VERSION_NAME);
+
+        materialDialog.show();
+    }
+
     private void showQuitPopup(){
 
         MaterialDialog.Builder builder =  new MaterialDialog.Builder(MapsActivity.this)
                 .canceledOnTouchOutside(false)
                 .title("Are you sure you want to exit?")
-                .customView(R.layout.exit_dialog, true)
+                .customView(R.layout.exit_dialog,false)
                 .negativeText("BACK")
                 .onNegative((dialog, which) -> {})
                 .positiveText("EXIT")
@@ -202,10 +219,11 @@ public class MapsActivity extends AppCompatActivity {
                 });
 
         MaterialDialog dialog = builder.build();
-        LinearLayout view = (LinearLayout) dialog.findViewById(R.id.adViewContainer);
-        AdView adView = new AdView(MapsActivity.this, "706320389533993_969293736569989", com.facebook.ads.AdSize.RECTANGLE_HEIGHT_250);
-        view.addView(adView);
-        adView.loadAd();
+        LinearLayout view = (LinearLayout) dialog.findViewById(R.id.adViewLayout);
+        AdView mAdView = view.findViewById(R.id.adView);
+        AdRequest adRequest = new AdRequest.Builder()
+                .build();
+        mAdView.loadAd(adRequest);
         dialog.show();
     }
 
@@ -234,13 +252,7 @@ public class MapsActivity extends AppCompatActivity {
     }
 
     private void showRandomInterstitialAds(){
-        Random random = new Random();
-        int num = random.nextInt(2);
-        if (num == 1){
-            interstitialAdsHelper.showAds();
-        } else {
-            SplashActivity.interstitialAd.show();
-        }
+        interstitialAdsHelper.showAds();
     }
 
     @Override
@@ -264,26 +276,38 @@ public class MapsActivity extends AppCompatActivity {
         }
     }
 
-    public static void deleteCache(Context context) {
+    public void deleteCache(Context context) {
+
         try {
-            File dir = context.getCacheDir();
-            deleteDir(dir);
+            File cacheDirectory = context.getCacheDir();
+            File applicationDirectory = new File(cacheDirectory.getParent());
+            if (applicationDirectory.exists()) {
+                String[] fileNames = applicationDirectory.list();
+                for (String fileName : fileNames) {
+                    if (!fileName.equals("lib")) {
+                        deleteFile(new File(applicationDirectory, fileName));
+                    }
+                }
+            }
         } catch (Exception e) {
         }
     }
 
-    public static boolean deleteDir(File dir) {
-        if (dir != null && dir.isDirectory()) {
-            String[] children = dir.list();
-            for (String aChildren : children) {
-                boolean success = deleteDir(new File(dir, aChildren));
-                if (!success) {
-                    return false;
+    public boolean deleteFile(File file) {
+        boolean deletedAll = true;
+        if (file != null) {
+            if (file.isDirectory()) {
+                String[] children = file.list();
+                for (String aChildren : children) {
+                    deletedAll = deleteFile(new File(file, aChildren)) && deletedAll;
                 }
+            } else {
+                deletedAll = file.delete();
             }
-            return dir.delete();
-        } else
-            return dir != null && dir.isFile() && dir.delete();
+        }
+        SharedPreferences sharedPreferences = this.getSharedPreferences("foodmap", 0);
+        sharedPreferences.edit().clear().apply();
+        return deletedAll;
     }
 
     private void startRefresh() {

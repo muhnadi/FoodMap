@@ -10,7 +10,6 @@ import android.util.Log;
 import android.view.View;
 import android.view.ViewPropertyAnimator;
 import android.view.animation.PathInterpolator;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;

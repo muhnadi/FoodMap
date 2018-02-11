@@ -2,6 +2,7 @@ package com.nerdgeeks.foodmap.fragments;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
@@ -44,10 +45,11 @@ public class MainFragment extends Fragment implements OnLocationUpdatedListener,
     LocationRequest mLocationRequest;
     PendingResult<LocationSettingsResult> result;
     public final static int REQUEST_LOCATION = 199;
-
     private static final String ARG_PARAM1 = "param1";
     private String mParam1;
     private Context mContext;
+    int bottomNavigationState = 1;
+    public static ProgressDialog pDialog;
 
     private static final int LOCATION_PERMISSION_ID = 1001;
 
@@ -93,6 +95,12 @@ public class MainFragment extends Fragment implements OnLocationUpdatedListener,
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
         client.connect();
+
+        pDialog = new ProgressDialog(mContext);
+        pDialog.setMessage("Loading ");
+        pDialog.setIndeterminate(false);
+        pDialog.setCancelable(false);
+        pDialog.setCanceledOnTouchOutside(false);
 
         AdView mAdView = rootView.findViewById(R.id.adView);
         AdRequest adRequest = new AdRequest.Builder()
@@ -145,7 +153,7 @@ public class MainFragment extends Fragment implements OnLocationUpdatedListener,
             final Status status = result.getStatus();
             switch (status.getStatusCode()) {
                 case LocationSettingsStatusCodes.SUCCESS:
-                    loadDataFirstTime();
+                    loadFirstTime();
                     break;
                 case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
                     try {
@@ -167,7 +175,7 @@ public class MainFragment extends Fragment implements OnLocationUpdatedListener,
             case REQUEST_LOCATION:
                 switch (resultCode) {
                     case Activity.RESULT_OK:
-                        loadDataFirstTime();
+                        loadFirstTime();
                         break;
                     case Activity.RESULT_CANCELED:
                         askForGPS();
@@ -177,15 +185,10 @@ public class MainFragment extends Fragment implements OnLocationUpdatedListener,
         }
     }
 
-
-    private void loadDataFirstTime(){
+    private void loadFirstTime() {
         startLocation();
-        new Handler().postDelayed(() -> {
-            FragmentTransaction mTransaction = getChildFragmentManager().beginTransaction();
-            mTransaction.replace(R.id.frame_container, NearbyFragment.newInstance(mParam1));
-            mTransaction.addToBackStack(null);
-            mTransaction.commit();
-        }, 2000);
+        pDialog.show();
+        new Handler().postDelayed(() -> loadFragment(NearbyFragment.newInstance(mParam1)),2500);
     }
 
     private void startLocation(){
@@ -213,14 +216,19 @@ public class MainFragment extends Fragment implements OnLocationUpdatedListener,
         public boolean onNavigationItemSelected(@NonNull MenuItem item) {
             Fragment mFragment;
             switch (item.getItemId()) {
-                case R.id.list:
-                    mFragment = ResultFragment.newInstance(mParam1);
-                    loadFragment(mFragment);
-                    return true;
-
                 case R.id.map:
-                    mFragment = NearbyFragment.newInstance(mParam1);
-                    loadFragment(mFragment);
+                    if (bottomNavigationState == 0){
+                        mFragment = NearbyFragment.newInstance(mParam1);
+                        loadFragment(mFragment);
+                    }
+                    bottomNavigationState = 1;
+                    return true;
+                case R.id.list:
+                    if (bottomNavigationState == 1){
+                        mFragment = ResultFragment.newInstance(mParam1);
+                        loadFragment(mFragment);
+                    }
+                    bottomNavigationState = 0;
                     return true;
             }
             return false;
@@ -232,11 +240,6 @@ public class MainFragment extends Fragment implements OnLocationUpdatedListener,
         mTransaction.replace(R.id.frame_container, mFragment);
         mTransaction.addToBackStack(null);
         mTransaction.commit();
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
     }
 
     @Override

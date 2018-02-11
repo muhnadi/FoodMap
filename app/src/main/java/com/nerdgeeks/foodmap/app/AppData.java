@@ -1,6 +1,9 @@
 package com.nerdgeeks.foodmap.app;
 
+import com.nerdgeeks.foodmap.model.DistanceTime;
+import com.nerdgeeks.foodmap.model.PlaceDetails;
 import com.nerdgeeks.foodmap.model.PlaceModel;
+import com.nerdgeeks.foodmap.model.Route;
 
 import java.util.ArrayList;
 
@@ -13,5 +16,10 @@ public class AppData {
     public static ArrayList<PlaceModel> placeModels = new ArrayList<>();
     public static Double lattitude;
     public static Double longitude;
+
+    public static PlaceDetails placeDetails;
+    public static ArrayList<DistanceTime> distanceTimes;
+    public static ArrayList<Route> routeArrayList;
+
 
 }

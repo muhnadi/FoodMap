@@ -9,22 +9,21 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-
 import com.nerdgeeks.foodmap.R;
-import com.nerdgeeks.foodmap.model.ReviewsModel;
+import com.nerdgeeks.foodmap.model.Review;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 
 /**
- * Created by hp on 1/3/2017.
+ * Created by TAOHID on 1/3/2017.
  */
 
 public class ReviewsAdapter extends RecyclerView.Adapter<ReviewsAdapter.ListHolder> {
-    private ArrayList<ReviewsModel> reviewsModelsList = new ArrayList<>();
+    private ArrayList<Review> reviewsModelsList = new ArrayList<>();
     private Context mContext;
 
-    public ReviewsAdapter(ArrayList<ReviewsModel> reviews, Context context) {
+    public ReviewsAdapter(ArrayList<Review> reviews, Context context) {
         this.reviewsModelsList = reviews;
         this.mContext = context;
     }
@@ -32,7 +31,6 @@ public class ReviewsAdapter extends RecyclerView.Adapter<ReviewsAdapter.ListHold
     @Override
     public ReviewsAdapter.ListHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View rootView = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_reviews, parent, false);
-        this.mContext = parent.getContext();
         return new ReviewsAdapter.ListHolder(rootView);
     }
 
@@ -46,12 +44,12 @@ public class ReviewsAdapter extends RecyclerView.Adapter<ReviewsAdapter.ListHold
         holder.user_text.setTypeface(ThemeFont);
         holder.user_time.setTypeface(ThemeFont);
 
-        String ratings = reviewsModelsList.get(position).getRatings();
-        String photoUrl = reviewsModelsList.get(position).getPhotoUrl();
+        String ratings = reviewsModelsList.get(position).getRating().toString();
+        String photoUrl = reviewsModelsList.get(position).getProfilePhotoUrl();
 
         if (photoUrl != null) {
             Picasso.with(mContext)
-                    .load("" + reviewsModelsList.get(position).getPhotoUrl())
+                    .load("" + photoUrl)
                     .into(holder.user_pic);
         } else {
             Picasso.with(mContext)
@@ -59,7 +57,7 @@ public class ReviewsAdapter extends RecyclerView.Adapter<ReviewsAdapter.ListHold
                     .into(holder.user_pic);
         }
 
-        if (ratings == null) {
+        if (ratings.equals("0.0")) {
             holder.user_ratingbar.setRating(0);
             holder.user_ratings.setText("N/A");
         } else {
@@ -68,8 +66,8 @@ public class ReviewsAdapter extends RecyclerView.Adapter<ReviewsAdapter.ListHold
         }
 
         holder.user_name.setText(reviewsModelsList.get(position).getAuthorName());
-        holder.user_text.setText(reviewsModelsList.get(position).getAuthorText());
-        holder.user_time.setText(reviewsModelsList.get(position).getTime());
+        holder.user_text.setText(reviewsModelsList.get(position).getAuthorName());
+        holder.user_time.setText(reviewsModelsList.get(position).getRelativeTimeDescription());
     }
 
     @Override

@@ -5,6 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
+    android:id="@+id/infoActivity"
     tools:context="com.nerdgeeks.foodmap.activities.InfoActivity">
 
     <android.support.design.widget.AppBarLayout
@@ -36,6 +37,7 @@
             app:primaryColor="@color/colorPrimary" />
 
         <com.google.android.gms.ads.AdView
+            android:visibility="gone"
             android:id="@+id/adView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -105,44 +107,57 @@
 
                     <TextView
                         android:id="@+id/nName"
-                        android:layout_width="wrap_content"
+                        android:layout_width="200dp"
                         android:layout_height="wrap_content"
+                        android:textColor="@android:color/tertiary_text_dark"
                         android:textAppearance="@style/TextAppearance.AppCompat.Medium"
                         android:textStyle="normal|bold" />
 
-                    <RatingBar
-                        android:id="@+id/rateBar"
-                        style="?android:attr/ratingBarStyleSmall"
+                    <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:isIndicator="true"
-                        android:numStars="5"
-                        android:stepSize="0.1" />
+                        android:orientation="horizontal">
 
-                    <TextView
-                        android:id="@+id/nRate"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textAppearance="@style/TextAppearance.AppCompat.Medium" />
+                        <TextView
+                            android:id="@+id/nRate"
+                            android:paddingRight="10dp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textAppearance="@style/TextAppearance.AppCompat.Medium" />
+
+                        <RatingBar
+                            android:id="@+id/rateBar"
+                            style="?android:attr/ratingBarStyleSmall"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:isIndicator="true"
+                            android:numStars="5"
+                            android:stepSize="0.1" />
+
+
+                    </LinearLayout>
+
                 </LinearLayout>
 
                 <LinearLayout
+                    android:paddingRight="60dp"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="right"
+                    android:gravity="left"
                     android:layout_weight="1"
                     android:orientation="vertical">
 
                     <TextView
                         android:id="@+id/nTime"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:gravity="center"
                         android:textAppearance="@style/TextAppearance.AppCompat.Medium" />
 
                     <TextView
                         android:id="@+id/nDistance"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:gravity="center"
                         android:textAppearance="@style/TextAppearance.AppCompat.Small" />

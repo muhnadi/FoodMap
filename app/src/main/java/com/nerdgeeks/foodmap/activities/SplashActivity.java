@@ -9,19 +9,12 @@ import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.TextView;
-
-import com.facebook.ads.AbstractAdListener;
-import com.facebook.ads.Ad;
-import com.facebook.ads.AdError;
-import com.facebook.ads.InterstitialAd;
 import com.nerdgeeks.foodmap.R;
 
 import uk.co.chrisjenx.calligraphy.CalligraphyConfig;
 import uk.co.chrisjenx.calligraphy.CalligraphyContextWrapper;
 
 public class SplashActivity extends Activity {
-
-    public static InterstitialAd interstitialAd;
 
     @Override
     protected void attachBaseContext(Context newBase) {
@@ -36,26 +29,6 @@ public class SplashActivity extends Activity {
                 .setFontAttrId(R.attr.fontPath)
                 .build());
         setContentView(R.layout.activity_splash);
-
-        interstitialAd = new InterstitialAd(this, "706320389533993_969561163209913");
-        interstitialAd.setAdListener(new AbstractAdListener() {
-            @Override
-            public void onError(Ad ad, AdError adError) {
-                super.onError(ad, adError);
-            }
-
-            @Override
-            public void onAdLoaded(Ad ad) {
-                super.onAdLoaded(ad);
-            }
-
-            @Override
-            public void onInterstitialDismissed(Ad ad) {
-                super.onInterstitialDismissed(ad);
-                interstitialAd.loadAd();
-            }
-        });
-        interstitialAd.loadAd();
 
         View mSplashImage = findViewById(R.id.splash);
         TextView mSplashText = findViewById(R.id.splashText);

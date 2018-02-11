@@ -5,16 +5,12 @@ import android.os.Handler;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
-import android.view.View;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-
-import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
-import com.google.android.gms.ads.InterstitialAd;
 import com.nerdgeeks.foodmap.R;
+import com.nerdgeeks.foodmap.utils.InterstitialAdsHelper;
 
 public class WebActivity extends AppCompatActivity {
 
@@ -31,7 +27,9 @@ public class WebActivity extends AppCompatActivity {
                 .build();
         mAdView.loadAd(adRequest);
 
-        new Handler().postDelayed(() -> SplashActivity.interstitialAd.show(),10000);
+        InterstitialAdsHelper interstitialAdsHelper = new InterstitialAdsHelper(this);
+
+        new Handler().postDelayed(interstitialAdsHelper::showAds,10000);
 
         //get String by Data Passing
         String URL = getIntent().getStringExtra("url");

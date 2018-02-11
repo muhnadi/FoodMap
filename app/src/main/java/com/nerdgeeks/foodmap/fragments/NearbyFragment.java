@@ -19,6 +19,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -38,7 +39,6 @@ import com.nerdgeeks.foodmap.helper.ConnectivityReceiver;
 import com.nerdgeeks.foodmap.model.PlaceModel;
 import com.nerdgeeks.foodmap.model.PlaceModelCall;
 import java.util.ArrayList;
-
 import io.nlopez.smartlocation.SmartLocation;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -56,7 +56,7 @@ public class NearbyFragment extends Fragment implements OnMapReadyCallback,
 
     private static final String ARG_PARAM1 = "param1";
     private GoogleMap mMap;
-    private ProgressDialog pDialog;
+    private ProgressDialog pDialog = MainFragment.pDialog;
     private PrefManager prefManager;
     private boolean isConnected;
     private SharedPreferences myPref;
@@ -101,55 +101,47 @@ public class NearbyFragment extends Fragment implements OnMapReadyCallback,
         View rootView = inflater.inflate(R.layout.fragment_nearby, container, false);
 
         snackView = rootView.findViewById(R.id.fragment_nearby);
-        prefManager = new PrefManager(getContext());
-        pDialog = new ProgressDialog(getContext());
-        pDialog.setMessage("Loading ");
-        pDialog.setIndeterminate(false);
-        pDialog.setCanceledOnTouchOutside(false);
+        prefManager = new PrefManager(mContext);
 
         myPref = mContext.getSharedPreferences("MyPref", Context.MODE_PRIVATE);
         isConnected = ConnectivityReceiver.isConnected();
 
-        try{
+        Location location = SmartLocation.with(mContext).location().getLastLocation();
+        if (location != null){
+            lat = location.getLatitude();
+            lng = location.getLongitude();
+        } else {
             lat = AppData.lattitude;
             lng = AppData.longitude;
-        } catch (Exception e){
-            Location location = SmartLocation.with(mContext).location().getLastLocation();
-            if (location != null) {
-                lat = location.getLatitude();
-                lng = location.getLongitude();
-            }
         }
 
         if (mMap == null) {
-            getActivity().runOnUiThread(() -> {
-                // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-                SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager()
-                        .findFragmentById(R.id.map);
-                mapFragment.getMapAsync(NearbyFragment.this);
-            });
+                getActivity().runOnUiThread(() -> {
+                    // Obtain the SupportMapFragment and get notified when the map is ready to be used.
+                    SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager()
+                            .findFragmentById(R.id.map);
+                    mapFragment.getMapAsync(NearbyFragment.this);
+                });
         }
+
         return rootView;
     }
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
 
-        pDialog.show();
         mMap = googleMap;
 
-        int height = 96;
-        int width = 96;
         BitmapDrawable bitmapdraw = (BitmapDrawable)getResources().getDrawable(R.drawable.ic_marker);
-        Bitmap b = bitmapdraw.getBitmap();
-        smallMarker = Bitmap.createScaledBitmap(b, width, height, false);
+        Bitmap bitmap = bitmapdraw.getBitmap();
+        smallMarker = Bitmap.createScaledBitmap(bitmap, (bitmap.getWidth()/2)+12,(bitmap.getHeight()/2)+12, false);
 
         if(!isConnected){
             if (prefManager.isPrefAvailable(type)){
                 lat = Double.parseDouble(myPref.getString("lat",""));
                 lng = Double.parseDouble(myPref.getString("lng",""));
                 showDataIntoMap(prefManager.readData(type));
-                Toast.makeText(mContext, "You are offline. Showing last data from cache", Toast.LENGTH_SHORT).show();
+                showSnackMessage("You are offline. Showing last data from cache");
             } else {
                 // stopping swipe refresh
                 pDialog.dismiss();
@@ -165,17 +157,17 @@ public class NearbyFragment extends Fragment implements OnMapReadyCallback,
         }
     }
 
+
+
     private void getDataFromServer(){
         String latLng = lat+","+lng;
         ApiInterface apiInterface = ApiClient.getClient().create(ApiInterface.class);
-        Call<PlaceModelCall> call = apiInterface.getNearbyPlaces(type,latLng,1000);
+        Call<PlaceModelCall> call = apiInterface.getNearbyPlaces(type,latLng,500);
         call.enqueue(new Callback<PlaceModelCall>() {
             @Override
             public void onResponse(@NonNull Call<PlaceModelCall> call, @NonNull Response<PlaceModelCall> response) {
 
                 placeModels = response.body().getResults();
-
-                Toast.makeText(mContext, response.body().getStatus(), Toast.LENGTH_SHORT).show();
 
                 SharedPreferences.Editor edit = myPref.edit();
                 edit.putString("lat", String.valueOf(AppData.lattitude));
@@ -183,7 +175,12 @@ public class NearbyFragment extends Fragment implements OnMapReadyCallback,
                 edit.apply();
 
                 if (response.body().getNextPageToken() != null){
-                    new Handler().postDelayed(() -> getNextPageDataFromServer(response.body().getNextPageToken()),2000);
+                    try {
+                        Thread.sleep(2000);
+                        getNextPageDataFromServer(response.body().getNextPageToken());
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                 } else {
                     // Store the data for offline uses
                     prefManager.storeData(placeModels,type);
@@ -236,14 +233,15 @@ public class NearbyFragment extends Fragment implements OnMapReadyCallback,
 
     private void showDataIntoMap(ArrayList<PlaceModel> placeModels) {
 
-        pDialog.dismiss();
-
         //zoom to current position:
         CameraPosition cameraPosition = new CameraPosition.Builder()
-                .target(new LatLng(lat,lng)).zoom(16).build();
-
+                .target(new LatLng(lat,lng)).zoom(17).build();
         mMap.animateCamera(CameraUpdateFactory
                 .newCameraPosition(cameraPosition));
+
+//        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lat,lng), 17));
+//        mMap.animateCamera(CameraUpdateFactory.zoomTo(17));
+
         mMap.setInfoWindowAdapter(NearbyFragment.this);
         mMap.setOnInfoWindowClickListener(this);
 
@@ -257,16 +255,8 @@ public class NearbyFragment extends Fragment implements OnMapReadyCallback,
             marker.setIcon(BitmapDescriptorFactory.fromBitmap(smallMarker));
             marker.showInfoWindow();
         }
-    }
 
-    @Override
-    public void onStop() {
-        super.onStop();
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
+        pDialog.dismiss();
     }
 
     private void showSnackMessage(String message) {
@@ -292,9 +282,6 @@ public class NearbyFragment extends Fragment implements OnMapReadyCallback,
         int position = Integer.parseInt(marker.getId().replace("m", ""));
         Intent detailIntent = new Intent(getActivity(), InfoActivity.class);
         detailIntent.putExtra("position", position);
-        detailIntent.putExtra("placeId", placeModels.get(position).getPlaceId());
-        detailIntent.putExtra("lat", lat);
-        detailIntent.putExtra("lng", lng);
         startActivity(detailIntent);
     }
 
@@ -305,7 +292,7 @@ public class NearbyFragment extends Fragment implements OnMapReadyCallback,
 
     @Override
     public View getInfoContents(Marker marker) {
-        View info = View.inflate(getContext(),R.layout.item_info_window, null);
+        View info = View.inflate(mContext,R.layout.item_info_window, null);
 
         TextView title = info.findViewById(R.id.mtitle);
         title.setText(marker.getTitle());

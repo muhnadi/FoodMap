@@ -43,8 +43,6 @@
             android:enabled="true"
             android:exported="false"/>
 
-        <service android:name=".service.MapService" android:process=":map_service" />
-
         <receiver android:name="com.google.android.gms.analytics.CampaignTrackingReceiver"
             android:exported="true">
             <intent-filter>
