@@ -122,8 +122,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, GoogleM
         desMarker.setIcon(BitmapDescriptorFactory.fromBitmap(smallMarker));
         desMarker.showInfoWindow();
 
-        gMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(srcLat,srcLng), 17));
-        gMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(destLat,destLng), 17));
         gMap.animateCamera(CameraUpdateFactory.zoomTo(17));
 
         getRoutes(new LatLng(srcLat,srcLng), new LatLng(destLat,destLng));

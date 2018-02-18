@@ -7,9 +7,7 @@ import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
-import android.location.Location;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
@@ -18,12 +16,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-import android.widget.Toast;
-
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapView;
+import com.google.android.gms.maps.MapsInitializer;
 import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
@@ -39,7 +36,6 @@ import com.nerdgeeks.foodmap.helper.ConnectivityReceiver;
 import com.nerdgeeks.foodmap.model.PlaceModel;
 import com.nerdgeeks.foodmap.model.PlaceModelCall;
 import java.util.ArrayList;
-import io.nlopez.smartlocation.SmartLocation;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -66,6 +62,7 @@ public class NearbyFragment extends Fragment implements OnMapReadyCallback,
     private String type;
     private ArrayList<PlaceModel> placeModels;
     private Context mContext;
+    private MapView mapView;
 
     public NearbyFragment() {
         // Required empty public constructor
@@ -106,28 +103,24 @@ public class NearbyFragment extends Fragment implements OnMapReadyCallback,
         myPref = mContext.getSharedPreferences("MyPref", Context.MODE_PRIVATE);
         isConnected = ConnectivityReceiver.isConnected();
 
-        Location location = SmartLocation.with(mContext).location().getLastLocation();
-        if (location != null){
-            lat = location.getLatitude();
-            lng = location.getLongitude();
-        } else {
-            lat = AppData.lattitude;
-            lng = AppData.longitude;
+        lat = AppData.lattitude;
+        lng = AppData.longitude;
+
+        mapView = rootView.findViewById(R.id.map);
+        mapView.onCreate(savedInstanceState);
+        mapView.onResume();
+
+        try {
+            MapsInitializer.initialize(mContext);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
-        if (mMap == null) {
-                getActivity().runOnUiThread(() -> {
-                    // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-                    SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager()
-                            .findFragmentById(R.id.map);
-                    mapFragment.getMapAsync(NearbyFragment.this);
-                });
-        }
+        getActivity().runOnUiThread(() -> mapView.getMapAsync(this));
 
         return rootView;
     }
 
-    @Override
     public void onMapReady(GoogleMap googleMap) {
 
         mMap = googleMap;
@@ -143,7 +136,7 @@ public class NearbyFragment extends Fragment implements OnMapReadyCallback,
                 showDataIntoMap(prefManager.readData(type));
                 showSnackMessage("You are offline. Showing last data from cache");
             } else {
-                // stopping swipe refresh
+                // stopping progress dialog
                 pDialog.dismiss();
                 showSnackMessage(INTERNET_ERROR);
             }
@@ -213,12 +206,13 @@ public class NearbyFragment extends Fragment implements OnMapReadyCallback,
                 ArrayList<PlaceModel> nextPlaceModels = response.body().getResults();
                 placeModels.addAll(nextPlaceModels);
 
+                //show the data into map
+                showDataIntoMap(placeModels);
+
                 // Store the data for offline uses
                 prefManager.storeData(placeModels,type);
                 // set this data to static Arraylist so that we can use it in our whole app
                 AppData.placeModels = placeModels;
-                //show the data into map
-                showDataIntoMap(placeModels);
             }
 
             @Override
@@ -233,15 +227,6 @@ public class NearbyFragment extends Fragment implements OnMapReadyCallback,
 
     private void showDataIntoMap(ArrayList<PlaceModel> placeModels) {
 
-        //zoom to current position:
-        CameraPosition cameraPosition = new CameraPosition.Builder()
-                .target(new LatLng(lat,lng)).zoom(17).build();
-        mMap.animateCamera(CameraUpdateFactory
-                .newCameraPosition(cameraPosition));
-
-//        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lat,lng), 17));
-//        mMap.animateCamera(CameraUpdateFactory.zoomTo(17));
-
         mMap.setInfoWindowAdapter(NearbyFragment.this);
         mMap.setOnInfoWindowClickListener(this);
 
@@ -253,10 +238,22 @@ public class NearbyFragment extends Fragment implements OnMapReadyCallback,
             markerOptions.snippet(placeModel.getVicinity() + "\nRatings : " + placeModel.getRating());
             Marker marker = mMap.addMarker(markerOptions);
             marker.setIcon(BitmapDescriptorFactory.fromBitmap(smallMarker));
-            marker.showInfoWindow();
         }
 
         pDialog.dismiss();
+
+        //zoom to current position:
+        CameraPosition cameraPosition = new CameraPosition.Builder()
+                .target(new LatLng(lat,lng))
+                .zoom(17)
+                .build();
+        mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        mapView.onResume();
     }
 
     private void showSnackMessage(String message) {

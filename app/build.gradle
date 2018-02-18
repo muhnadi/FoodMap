@@ -14,8 +14,8 @@ android {
         applicationId "com.nerdgeeks.foodmap"
         minSdkVersion 14
         targetSdkVersion 27
-        versionCode 14
-        versionName "2.1"
+        versionCode 15
+        versionName "2.2"
         signingConfig signingConfigs.config
     }
     buildTypes {
@@ -61,9 +61,6 @@ dependencies {
     implementation 'com.squareup.picasso:picasso:2.5.2'
 
     implementation 'uk.co.chrisjenx:calligraphy:2.3.0'
-    implementation ('io.nlopez.smartlocation:library:3.3.3') {
-        transitive = false
-    }
 
     implementation 'com.google.android.gms:play-services-location:11.8.0'
     implementation 'com.google.android.gms:play-services-maps:11.8.0'

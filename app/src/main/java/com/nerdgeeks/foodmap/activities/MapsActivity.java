@@ -21,6 +21,7 @@ import android.widget.TextView;
 
 import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
+import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.google.android.gms.analytics.GoogleAnalytics;
@@ -224,6 +225,17 @@ public class MapsActivity extends AppCompatActivity {
         AdRequest adRequest = new AdRequest.Builder()
                 .build();
         mAdView.loadAd(adRequest);
+        mAdView.setAdListener(new AdListener() {
+            @Override
+            public void onAdFailedToLoad(int i) {
+                mAdView.setVisibility(View.GONE);
+            }
+
+            @Override
+            public void onAdLoaded() {
+                mAdView.setVisibility(View.VISIBLE);
+            }
+        });
         dialog.show();
     }
 
@@ -246,7 +258,7 @@ public class MapsActivity extends AppCompatActivity {
     public void onResume() {
         super.onResume();
         resumeCount++;
-        if (resumeCount % 6 == 0){
+        if (resumeCount % 8 == 0){
             showRandomInterstitialAds();
         }
     }

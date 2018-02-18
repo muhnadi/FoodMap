@@ -9,7 +9,7 @@ import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
-import android.os.Handler;
+import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.BottomNavigationView;
@@ -25,22 +25,23 @@ import com.google.android.gms.ads.AdView;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResult;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.nerdgeeks.foodmap.R;
 import com.nerdgeeks.foodmap.app.AppData;
-import io.nlopez.smartlocation.OnLocationUpdatedListener;
-import io.nlopez.smartlocation.SmartLocation;
-import io.nlopez.smartlocation.location.config.LocationAccuracy;
-import io.nlopez.smartlocation.location.config.LocationParams;
+
+public class MainFragment extends Fragment implements GoogleApiClient.ConnectionCallbacks {
 
 
-public class MainFragment extends Fragment implements OnLocationUpdatedListener, GoogleApiClient.ConnectionCallbacks {
-
-
+    private FusedLocationProviderClient mFusedLocationClient;
+    private Location mCurrentLocation;
+    boolean gps_enabled = false;
     GoogleApiClient client;
     LocationRequest mLocationRequest;
     PendingResult<LocationSettingsResult> result;
@@ -50,7 +51,6 @@ public class MainFragment extends Fragment implements OnLocationUpdatedListener,
     private Context mContext;
     int bottomNavigationState = 1;
     public static ProgressDialog pDialog;
-
     private static final int LOCATION_PERMISSION_ID = 1001;
 
     public MainFragment() {
@@ -79,6 +79,7 @@ public class MainFragment extends Fragment implements OnLocationUpdatedListener,
             mParam1 = getArguments().getString(ARG_PARAM1);
         }
         buildGoogleApiClient();
+        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(mContext);
     }
 
     protected synchronized void buildGoogleApiClient() {
@@ -86,6 +87,7 @@ public class MainFragment extends Fragment implements OnLocationUpdatedListener,
                 .addApi(LocationServices.API)
                 .addConnectionCallbacks(this)
                 .build();
+        client.connect();
     }
 
     @Override
@@ -93,8 +95,6 @@ public class MainFragment extends Fragment implements OnLocationUpdatedListener,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-
-        client.connect();
 
         pDialog = new ProgressDialog(mContext);
         pDialog.setMessage("Loading ");
@@ -141,6 +141,7 @@ public class MainFragment extends Fragment implements OnLocationUpdatedListener,
     }
 
     private void askForGPS(){
+
         mLocationRequest = LocationRequest.create();
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         mLocationRequest.setInterval(30 * 1000);
@@ -158,9 +159,7 @@ public class MainFragment extends Fragment implements OnLocationUpdatedListener,
                 case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
                     try {
                         status.startResolutionForResult(getActivity(), REQUEST_LOCATION);
-                    } catch (IntentSender.SendIntentException e) {
-
-                    }
+                    } catch (IntentSender.SendIntentException e) {}
                     break;
                 case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
                     break;
@@ -185,29 +184,32 @@ public class MainFragment extends Fragment implements OnLocationUpdatedListener,
         }
     }
 
+
     private void loadFirstTime() {
-        startLocation();
+        if (ContextCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_ID);
+            return;
+        }
         pDialog.show();
-        new Handler().postDelayed(() -> loadFragment(NearbyFragment.newInstance(mParam1)),2500);
+        mFusedLocationClient.requestLocationUpdates(mLocationRequest, mLocationCallback, Looper.myLooper());
     }
 
-    private void startLocation(){
-        long mLocTrackingInterval = 10000; // 5 sec
-        float trackingDistance = 0f;
-        LocationAccuracy trackingAccuracy = LocationAccuracy.HIGH;
-        LocationParams.Builder builder = new LocationParams.Builder()
-                .setAccuracy(trackingAccuracy)
-                .setDistance(trackingDistance)
-                .setInterval(mLocTrackingInterval);
-        SmartLocation smartLocation = new SmartLocation.Builder(mContext).logging(true).build();
-        smartLocation.location().continuous().config(builder.build()).start(this);
-    }
+    LocationCallback mLocationCallback = new LocationCallback() {
+        @Override
+        public void onLocationResult(LocationResult locationResult) {
 
-    @Override
-    public void onLocationUpdated(Location location) {
-        AppData.lattitude = location.getLatitude();
-        AppData.longitude = location.getLongitude();
-    }
+            mCurrentLocation = locationResult.getLastLocation();
+            AppData.lattitude = mCurrentLocation.getLatitude();
+            AppData.longitude = mCurrentLocation.getLongitude();
+
+            // Default show nearby map fragment
+            loadFragment(NearbyFragment.newInstance(mParam1));
+
+            if (mFusedLocationClient != null) {
+                mFusedLocationClient.removeLocationUpdates(mLocationCallback);
+            }
+        }
+    };
 
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
@@ -243,9 +245,11 @@ public class MainFragment extends Fragment implements OnLocationUpdatedListener,
     }
 
     @Override
-    public void onStop() {
-        super.onStop();
-        SmartLocation.with(mContext).location().stop();
+    public void onPause() {
+        super.onPause();
+        if (mFusedLocationClient != null) {
+            mFusedLocationClient.removeLocationUpdates(mLocationCallback);
+        }
     }
 
     @Override

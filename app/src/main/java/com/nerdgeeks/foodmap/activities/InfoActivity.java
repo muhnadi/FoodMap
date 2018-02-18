@@ -49,7 +49,6 @@ import com.nerdgeeks.foodmap.model.TabsItem;
 import com.squareup.picasso.Picasso;
 import java.util.ArrayList;
 import java.util.List;
-import io.nlopez.smartlocation.SmartLocation;
 import it.neokree.materialtabs.MaterialTab;
 import it.neokree.materialtabs.MaterialTabHost;
 import it.neokree.materialtabs.MaterialTabListener;
@@ -128,16 +127,8 @@ public class InfoActivity extends AppCompatActivity implements MaterialTabListen
             }
         });
 
-        try {
-            latitude = AppData.lattitude;
-            longitude = AppData.longitude;
-        } catch (Exception e){
-            Location location = SmartLocation.with(this).location().getLastLocation();
-            if (location != null){
-                latitude = location.getLatitude();
-                longitude = location.getLongitude();
-            }
-        }
+        latitude = AppData.lattitude;
+        longitude = AppData.longitude;
 
         progressDialog = new ProgressDialog(this);
         progressDialog.setMessage("Loading...");
