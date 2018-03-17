@@ -3,7 +3,6 @@ package com.nerdgeeks.foodmap.activities;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Bundle;
@@ -12,22 +11,22 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.afollestad.materialdialogs.DialogAction;
+import com.afollestad.materialdialogs.GravityEnum;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.google.android.gms.analytics.GoogleAnalytics;
 import com.google.android.gms.analytics.Tracker;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
 import com.mikepenz.materialdrawer.Drawer;
 import com.mikepenz.materialdrawer.DrawerBuilder;
+import com.mikepenz.materialdrawer.holder.StringHolder;
 import com.mikepenz.materialdrawer.model.PrimaryDrawerItem;
 import com.mikepenz.materialdrawer.model.SectionDrawerItem;
 import com.nerdgeeks.foodmap.BuildConfig;
@@ -35,7 +34,6 @@ import com.nerdgeeks.foodmap.R;
 import com.nerdgeeks.foodmap.app.AppData;
 import com.nerdgeeks.foodmap.fragments.MainFragment;
 import com.nerdgeeks.foodmap.utils.InterstitialAdsHelper;
-import java.io.File;
 
 import uk.co.chrisjenx.calligraphy.CalligraphyConfig;
 import uk.co.chrisjenx.calligraphy.CalligraphyContextWrapper;
@@ -49,7 +47,7 @@ public class MapsActivity extends AppCompatActivity {
     private int resumeCount;
     int adsDelay = 30000;
     private InterstitialAdsHelper interstitialAdsHelper;
-    Drawer drawer;
+    public static Drawer drawer;
 
     @Override
     protected void attachBaseContext(Context newBase) {
@@ -117,7 +115,13 @@ public class MapsActivity extends AppCompatActivity {
                         new PrimaryDrawerItem()
                                 .withName("About")
                                 .withIcon(R.drawable.ic_info)
-                                .withIdentifier(6)
+                                .withIdentifier(6),
+                        new SectionDrawerItem()
+                                .withName("Current Location")
+                                .withIdentifier(7),
+                        new PrimaryDrawerItem()
+                                .withName("")
+                                .withIdentifier(8)
 
                 )
                 .withOnDrawerItemClickListener((view1, position, drawerItem) -> {
@@ -166,6 +170,11 @@ public class MapsActivity extends AppCompatActivity {
                             }
                         } else if (drawerItem.getIdentifier() == 6) {
                             aboutMyApp();
+                        } else if (drawerItem.getIdentifier() == 8) {
+                            AppData.lattitude = AppData.longitude = null;
+                            drawer.setSelection(1);
+                            drawer.updateName(7,new StringHolder("Current Location"));
+                            drawer.updateName(8,new StringHolder(""));
                         }
                     }
                     return false;
@@ -184,6 +193,7 @@ public class MapsActivity extends AppCompatActivity {
                 .positiveText("MORE APPS")
                 .positiveColor(getResources().getColor(android.R.color.white))
                 .icon(getResources().getDrawable(R.drawable.ic_splash))
+                .limitIconToDefaultSize()
                 .onPositive((dialog, which) -> {
                     Uri uri = Uri.parse("market://search?q=pub:" + "NerdGeeks");
                     Intent goToMarket = new Intent(Intent.ACTION_VIEW, uri);
@@ -199,8 +209,8 @@ public class MapsActivity extends AppCompatActivity {
 
         TextView versionCode = (TextView) materialDialog.findViewById(R.id.version_code);
         TextView versionName = (TextView) materialDialog.findViewById(R.id.version_name);
-        versionCode.setText(String.valueOf("vCode : " + BuildConfig.VERSION_CODE));
-        versionName.setText("vName : " + BuildConfig.VERSION_NAME);
+        versionCode.setText(String.valueOf("Version Code : " + BuildConfig.VERSION_CODE));
+        versionName.setText(String.valueOf("Version Name : " + BuildConfig.VERSION_NAME));
 
         materialDialog.show();
     }
@@ -258,7 +268,7 @@ public class MapsActivity extends AppCompatActivity {
     public void onResume() {
         super.onResume();
         resumeCount++;
-        if (resumeCount % 8 == 0){
+        if (resumeCount % 7 == 0){
             showRandomInterstitialAds();
         }
     }
@@ -266,71 +276,6 @@ public class MapsActivity extends AppCompatActivity {
     private void showRandomInterstitialAds(){
         interstitialAdsHelper.showAds();
     }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.options, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-
-        switch (item.getItemId()) {
-            case R.id.refresh:
-                startRefresh();
-                return true;
-            case R.id.cached:
-                deleteCache(this);
-            default:
-                return super.onOptionsItemSelected(item);
-        }
-    }
-
-    public void deleteCache(Context context) {
-
-        try {
-            File cacheDirectory = context.getCacheDir();
-            File applicationDirectory = new File(cacheDirectory.getParent());
-            if (applicationDirectory.exists()) {
-                String[] fileNames = applicationDirectory.list();
-                for (String fileName : fileNames) {
-                    if (!fileName.equals("lib")) {
-                        deleteFile(new File(applicationDirectory, fileName));
-                    }
-                }
-            }
-        } catch (Exception e) {
-        }
-    }
-
-    public boolean deleteFile(File file) {
-        boolean deletedAll = true;
-        if (file != null) {
-            if (file.isDirectory()) {
-                String[] children = file.list();
-                for (String aChildren : children) {
-                    deletedAll = deleteFile(new File(file, aChildren)) && deletedAll;
-                }
-            } else {
-                deletedAll = file.delete();
-            }
-        }
-        SharedPreferences sharedPreferences = this.getSharedPreferences("foodmap", 0);
-        sharedPreferences.edit().clear().apply();
-        return deletedAll;
-    }
-
-    private void startRefresh() {
-        new Handler().postDelayed(() -> {
-            Intent intent = getIntent();
-            intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
-            finish();
-            startActivity(intent);
-        }, 700);
-    }
-
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -341,4 +286,5 @@ public class MapsActivity extends AppCompatActivity {
             super.onActivityResult(requestCode, resultCode, data);
         }
     }
+
 }

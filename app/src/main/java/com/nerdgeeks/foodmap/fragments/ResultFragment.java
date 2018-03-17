@@ -41,6 +41,8 @@ public class ResultFragment extends Fragment implements
     private String type;
     private SwipeRefreshLayout swipeRefreshLayout;
 
+    private ArrayList<PlaceModel> tempPlaceModelList;
+
     private RecyclerView mRecyclerView;
     private PrefManager prefManager;
     private boolean isConnected;
@@ -166,7 +168,7 @@ public class ResultFragment extends Fragment implements
 
     private ArrayList<PlaceModel> filterByRating(ArrayList<PlaceModel> models, String query) {
 
-        final ArrayList<PlaceModel> filteredModelList = new ArrayList<>();
+        ArrayList<PlaceModel> filteredModelList = new ArrayList<>();
         for (PlaceModel model : models) {
             String rating = model.getRating().toString().split("\\.")[0];
             if (rating.equals(query)) {
@@ -175,7 +177,6 @@ public class ResultFragment extends Fragment implements
         }
         return filteredModelList;
     }
-
 
     @Override
     public void onPause() {
@@ -209,13 +210,6 @@ public class ResultFragment extends Fragment implements
         }
     }
 
-    private OnItemClickListener recyclerRowClickListener = (v, position) -> {
-
-        Intent detailIntent = new Intent(getActivity(), InfoActivity.class);
-        detailIntent.putExtra("position", position);
-        startActivity(detailIntent);
-    };
-
     @Override
     public void onNetworkConnectionChanged(boolean isConnected) {
         this.isConnected = isConnected;
@@ -235,6 +229,8 @@ public class ResultFragment extends Fragment implements
 
     private void setRecyclerAdapter(ArrayList<PlaceModel> placeModels){
 
+        tempPlaceModelList = placeModels;
+
         // stopping swipe refresh
         swipeRefreshLayout.setRefreshing(false);
 
@@ -249,5 +245,13 @@ public class ResultFragment extends Fragment implements
         }
         mRecyclerView.setAdapter(mapAdapter);
     }
+
+    private OnItemClickListener recyclerRowClickListener = (v, position) -> {
+
+        String placeId = tempPlaceModelList.get(position).getPlaceId();
+        Intent detailIntent = new Intent(getActivity(), InfoActivity.class);
+        detailIntent.putExtra("placeId", placeId);
+        startActivity(detailIntent);
+    };
 
 }

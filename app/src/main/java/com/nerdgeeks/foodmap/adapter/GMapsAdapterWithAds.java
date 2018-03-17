@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import android.view.LayoutInflater;
 import android.content.Context;
 
+import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.nerdgeeks.foodmap.R;
@@ -131,24 +132,35 @@ public class GMapsAdapterWithAds extends RecyclerView.Adapter<RecyclerView.ViewH
         }
     }
 
-    public static class AdHolder extends RecyclerView.ViewHolder {
+    private static class AdHolder extends RecyclerView.ViewHolder {
         private AdView mAdView;
 
-        public AdHolder(View view) {
+        private AdHolder(View view) {
             super(view);
             mAdView = view.findViewById(R.id.adView);
         }
 
-        public void bindView() {
+        private void bindView() {
             AdRequest adRequest = new AdRequest.Builder()
                     .build();
             mAdView.loadAd(adRequest);
+            mAdView.setAdListener(new AdListener() {
+                @Override
+                public void onAdFailedToLoad(int i) {
+                    mAdView.setVisibility(View.GONE);
+                }
+
+                @Override
+                public void onAdLoaded() {
+                    mAdView.setVisibility(View.VISIBLE);
+                }
+            });
         }
     }
 
     @Override
     public int getItemViewType(int position) {
-        if (position % 8 == 1) {
+        if (position % 5 == 1) {
             return AD_TYPE;
         }
         else {

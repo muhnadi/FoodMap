@@ -147,9 +147,7 @@ public class InfoActivity extends AppCompatActivity implements MaterialTabListen
         tabHost = findViewById(R.id.materialTabHost);
         View llBottomSheet = findViewById(R.id.card);
 
-
-        int pos = getIntent().getIntExtra("position", 0);
-        String placeId = AppData.placeModels.get(pos).getPlaceId();
+        String placeId = getIntent().getExtras().getString("placeId");
         getDataFromServer(placeId);
 
         mTabs.add(new TabsItem(MapFragment.newInstance()));

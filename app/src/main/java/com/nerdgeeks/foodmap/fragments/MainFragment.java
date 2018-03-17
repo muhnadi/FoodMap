@@ -3,10 +3,16 @@ package com.nerdgeeks.foodmap.fragments;
 import android.Manifest;
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
+import android.graphics.Typeface;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Looper;
@@ -15,10 +21,18 @@ import android.support.annotation.Nullable;
 import android.support.design.widget.BottomNavigationView;
 import android.support.v4.app.*;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.view.MenuItemCompat;
+import android.support.v7.widget.SearchView;
+import android.text.style.CharacterStyle;
+import android.text.style.StyleSpan;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.Toast;
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
@@ -33,11 +47,29 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResult;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
+import com.google.android.gms.location.places.AutocompleteFilter;
+import com.google.android.gms.location.places.AutocompletePrediction;
+import com.google.android.gms.location.places.Place;
+import com.google.android.gms.location.places.Places;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
+import com.mikepenz.materialdrawer.holder.StringHolder;
 import com.nerdgeeks.foodmap.R;
+import com.nerdgeeks.foodmap.activities.MapsActivity;
+import com.nerdgeeks.foodmap.adapter.PlaceAutocompleteAdapter;
 import com.nerdgeeks.foodmap.app.AppData;
+import java.io.File;
+import java.io.IOException;
+import java.util.List;
+import java.util.Locale;
+import static android.content.Context.INPUT_METHOD_SERVICE;
 
 public class MainFragment extends Fragment implements GoogleApiClient.ConnectionCallbacks {
 
+    private static final LatLngBounds LAT_LNG_BOUNDS = new LatLngBounds(
+            new LatLng(-40, -168), new LatLng(71, 136));
+    private CharacterStyle STYLE_BOLD = new StyleSpan(Typeface.BOLD);
+    public static PlaceAutocompleteAdapter placesAutoCompleteAdapter;
 
     private FusedLocationProviderClient mFusedLocationClient;
     private Location mCurrentLocation;
@@ -85,10 +117,14 @@ public class MainFragment extends Fragment implements GoogleApiClient.Connection
     protected synchronized void buildGoogleApiClient() {
         client = new GoogleApiClient.Builder(mContext)
                 .addApi(LocationServices.API)
+                .addApi(Places.GEO_DATA_API)
+                .addApi(Places.PLACE_DETECTION_API)
                 .addConnectionCallbacks(this)
                 .build();
         client.connect();
     }
+
+
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
@@ -190,8 +226,14 @@ public class MainFragment extends Fragment implements GoogleApiClient.Connection
             requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_ID);
             return;
         }
+
         pDialog.show();
-        mFusedLocationClient.requestLocationUpdates(mLocationRequest, mLocationCallback, Looper.myLooper());
+        if (AppData.longitude == null && AppData.longitude == null) {
+            mFusedLocationClient.requestLocationUpdates(mLocationRequest, mLocationCallback, Looper.myLooper());
+        } else {
+            setHasOptionsMenu(true);
+            loadFragment(NearbyFragment.newInstance(mParam1));
+        }
     }
 
     LocationCallback mLocationCallback = new LocationCallback() {
@@ -201,7 +243,7 @@ public class MainFragment extends Fragment implements GoogleApiClient.Connection
             mCurrentLocation = locationResult.getLastLocation();
             AppData.lattitude = mCurrentLocation.getLatitude();
             AppData.longitude = mCurrentLocation.getLongitude();
-
+            setHasOptionsMenu(true);
             // Default show nearby map fragment
             loadFragment(NearbyFragment.newInstance(mParam1));
 
@@ -261,4 +303,148 @@ public class MainFragment extends Fragment implements GoogleApiClient.Connection
     public void onConnectionSuspended(int i) {
 
     }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.options, menu);
+
+        MenuItem searchItem = menu.findItem(R.id.menu_search);
+        SearchView mSearchView = (SearchView) MenuItemCompat.getActionView(searchItem);
+        SearchView.SearchAutoComplete searchAutoComplete = mSearchView.findViewById(android.support.v7.appcompat.R.id.search_src_text);
+        searchAutoComplete.setTextColor(Color.BLACK);
+        SearchManager searchManager = (SearchManager) mContext.getSystemService(Context.SEARCH_SERVICE);
+        mSearchView.setSearchableInfo(searchManager.getSearchableInfo(getActivity().getComponentName()));
+
+        AutocompleteFilter autocompleteFilter = new AutocompleteFilter.Builder()
+                .setTypeFilter(Place.TYPE_COUNTRY)
+                .setCountry(getCountryCode())
+                .build();
+        placesAutoCompleteAdapter = new PlaceAutocompleteAdapter(mContext, client,
+                LAT_LNG_BOUNDS, autocompleteFilter);
+        searchAutoComplete.setAdapter(placesAutoCompleteAdapter);
+
+        searchAutoComplete.setOnItemClickListener((adapterView, view, itemIndex, id) -> {
+            try {
+                InputMethodManager imm = (InputMethodManager) mContext.getSystemService(INPUT_METHOD_SERVICE);
+                assert imm != null;
+                imm.hideSoftInputFromWindow(getActivity().getCurrentFocus().getWindowToken(), 0);
+            } catch (Exception e) {
+            }
+            final AutocompletePrediction place = placesAutoCompleteAdapter.getItem(itemIndex);
+            assert place != null;
+            final String placeName = String.valueOf(place.getFullText(STYLE_BOLD));
+            searchAutoComplete.setText("" + placeName);
+            MapsActivity.drawer.updateName(7, new StringHolder(placeName));
+            MapsActivity.drawer.updateName(8,new StringHolder("Remove Location"));
+            geoLocate(place.getPlaceId());
+        });
+
+        mSearchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                final AutocompletePrediction place = placesAutoCompleteAdapter.getItem(0);
+                if (place != null) {
+                    final String placeName = String.valueOf(place.getFullText(STYLE_BOLD));
+                    searchAutoComplete.setText("" + placeName);
+                    MapsActivity.drawer.updateName(7, new StringHolder(placeName));
+                    MapsActivity.drawer.updateName(8, new StringHolder("Remove Location"));
+                    geoLocate(place.getPlaceId());
+                } else {
+                    Toast.makeText(mContext, "Google can't find this place", Toast.LENGTH_SHORT).show();
+                }
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                return false;
+            }
+        });
+    }
+
+    private String getCountryCode(){
+        String countryCode;
+        try {
+            Geocoder geocoder;
+            List<Address> addresses;
+            geocoder = new Geocoder(mContext, Locale.getDefault());
+            addresses = geocoder.getFromLocation(AppData.lattitude, AppData.longitude, 1); // Here 1 represent max location result to returned, by documents it recommended 1 to 5
+            countryCode = addresses.get(0).getCountryCode();
+        } catch (IOException e) {
+            e.printStackTrace();
+            countryCode = "";
+        }
+        return countryCode;
+    }
+
+    private void geoLocate(String placeId){
+
+        Places.GeoDataApi.getPlaceById(client, placeId)
+                .setResultCallback(places -> {
+                    if (places.getStatus().isSuccess()) {
+                        final Place myPlace = places.get(0);
+                        LatLng queriedLocation = myPlace.getLatLng();
+                        AppData.lattitude = queriedLocation.latitude;
+                        AppData.longitude = queriedLocation.longitude;
+                        AppData.placeModels.clear();
+                        loadFirstTime();
+                        bottomNavigationState = 1;
+                    }
+                    places.release();
+                });
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+        switch (item.getItemId()) {
+            case R.id.menu_search:
+                return true;
+            case R.id.refresh:
+                bottomNavigationState = 1;
+                AppData.lattitude = AppData.longitude = null;
+                AppData.placeModels.clear();
+                askForGPS();
+                return true;
+            case R.id.cached:
+                deleteCache(mContext);
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+    public void deleteCache(Context context) {
+
+        try {
+            File cacheDirectory = context.getCacheDir();
+            File applicationDirectory = new File(cacheDirectory.getParent());
+            if (applicationDirectory.exists()) {
+                String[] fileNames = applicationDirectory.list();
+                for (String fileName : fileNames) {
+                    if (!fileName.equals("lib")) {
+                        deleteFile(new File(applicationDirectory, fileName));
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
+    public boolean deleteFile(File file) {
+        boolean deletedAll = true;
+        if (file != null) {
+            if (file.isDirectory()) {
+                String[] children = file.list();
+                for (String aChildren : children) {
+                    deletedAll = deleteFile(new File(file, aChildren)) && deletedAll;
+                }
+            } else {
+                deletedAll = file.delete();
+            }
+        }
+        SharedPreferences sharedPreferences = mContext.getSharedPreferences("foodmap", 0);
+        sharedPreferences.edit().clear().apply();
+        return deletedAll;
+    }
+
 }
