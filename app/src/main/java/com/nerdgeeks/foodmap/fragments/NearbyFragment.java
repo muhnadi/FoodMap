@@ -21,11 +21,15 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.MapsInitializer;
 import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.UiSettings;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.maps.android.clustering.Cluster;
+import com.google.maps.android.clustering.ClusterManager;
 import com.nerdgeeks.foodmap.Api.ApiClient;
 import com.nerdgeeks.foodmap.Api.ApiInterface;
 import com.nerdgeeks.foodmap.R;
@@ -33,8 +37,10 @@ import com.nerdgeeks.foodmap.activities.InfoActivity;
 import com.nerdgeeks.foodmap.app.AppData;
 import com.nerdgeeks.foodmap.app.PrefManager;
 import com.nerdgeeks.foodmap.helper.ConnectivityReceiver;
+import com.nerdgeeks.foodmap.MapCluster.ClusterModel;
 import com.nerdgeeks.foodmap.model.PlaceModel;
 import com.nerdgeeks.foodmap.model.PlaceModelCall;
+import com.nerdgeeks.foodmap.MapCluster.ClusterRenderer;
 import java.util.ArrayList;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -48,10 +54,11 @@ import static com.nerdgeeks.foodmap.app.AppConfig.*;
  * create an instance of this fragment.
  */
 public class NearbyFragment extends Fragment implements OnMapReadyCallback,
-        GoogleMap.OnInfoWindowClickListener, GoogleMap.InfoWindowAdapter{
+         GoogleMap.InfoWindowAdapter, ClusterManager.OnClusterClickListener<ClusterModel>, ClusterManager.OnClusterItemInfoWindowClickListener<ClusterModel> {
 
     private static final String ARG_PARAM1 = "param1";
     private GoogleMap mMap;
+    private ClusterManager<ClusterModel> mClusterManager;
     private ProgressDialog pDialog = MainFragment.pDialog;
     private PrefManager prefManager;
     private boolean isConnected;
@@ -121,13 +128,29 @@ public class NearbyFragment extends Fragment implements OnMapReadyCallback,
         return rootView;
     }
 
-    public void onMapReady(GoogleMap googleMap) {
 
+    public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
+
+        UiSettings uiSettings = mMap.getUiSettings();
+        uiSettings.setCompassEnabled(false);
+        uiSettings.setZoomControlsEnabled(false);
+        uiSettings.setMyLocationButtonEnabled(true);
 
         BitmapDrawable bitmapdraw = (BitmapDrawable)getResources().getDrawable(R.drawable.ic_marker);
         Bitmap bitmap = bitmapdraw.getBitmap();
-        smallMarker = Bitmap.createScaledBitmap(bitmap, (bitmap.getWidth()/2)+12,(bitmap.getHeight()/2)+12, false);
+        smallMarker = Bitmap.createScaledBitmap(bitmap, (bitmap.getWidth()/2)+20,(bitmap.getHeight()/2)+20, false);
+
+        //Google Map Clustering Utility
+        mClusterManager = new ClusterManager<>(mContext, mMap);
+        mClusterManager.setRenderer(new ClusterRenderer(mContext,mMap,mClusterManager));
+        mClusterManager.setOnClusterClickListener(this);
+        mClusterManager.setOnClusterItemInfoWindowClickListener(this);
+
+        mMap.setInfoWindowAdapter(this);
+        mMap.setOnCameraIdleListener(mClusterManager);
+        mMap.setOnMarkerClickListener(mClusterManager);
+        mMap.setOnInfoWindowClickListener(mClusterManager);
 
         if(!isConnected){
             if (prefManager.isPrefAvailable(type)){
@@ -227,27 +250,30 @@ public class NearbyFragment extends Fragment implements OnMapReadyCallback,
 
     private void showDataIntoMap(ArrayList<PlaceModel> placeModels) {
 
-        mMap.setInfoWindowAdapter(NearbyFragment.this);
-        mMap.setOnInfoWindowClickListener(this);
-
         for (PlaceModel placeModel: placeModels) {
-            MarkerOptions markerOptions = new MarkerOptions();
+
             LatLng latLng = new LatLng(placeModel.getGeometry().getLocation().getLat(), placeModel.getGeometry().getLocation().getLng());
+
+            MarkerOptions markerOptions = new MarkerOptions();
             markerOptions.position(latLng);
             markerOptions.title(placeModel.getName());
             markerOptions.snippet(placeModel.getVicinity() + "\nRatings : " + placeModel.getRating());
-            Marker marker = mMap.addMarker(markerOptions);
-            marker.setIcon(BitmapDescriptorFactory.fromBitmap(smallMarker));
+            markerOptions.icon(BitmapDescriptorFactory.fromBitmap(smallMarker));
+
+            ClusterModel clusterModel = new ClusterModel(placeModel.getPlaceId(), markerOptions);
+            mClusterManager.addItem(clusterModel);
         }
 
-        pDialog.dismiss();
+        mClusterManager.cluster();
 
         //zoom to current position:
         CameraPosition cameraPosition = new CameraPosition.Builder()
                 .target(new LatLng(lat,lng))
-                .zoom(17)
+                .zoom(16)
+                .bearing(30)
                 .build();
         mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+        pDialog.dismiss();
     }
 
     @Override
@@ -269,20 +295,6 @@ public class NearbyFragment extends Fragment implements OnMapReadyCallback,
     }
 
     @Override
-    public void onInfoWindowClick(Marker marker) {
-
-        if (!isConnected){
-            showSnackMessage(INTERNET_ERROR);
-            return;
-        }
-
-        int position = Integer.parseInt(marker.getId().replace("m", ""));
-        Intent detailIntent = new Intent(getActivity(), InfoActivity.class);
-        detailIntent.putExtra("position", position);
-        startActivity(detailIntent);
-    }
-
-    @Override
     public View getInfoWindow(Marker marker) {
         return null;
     }
@@ -301,5 +313,40 @@ public class NearbyFragment extends Fragment implements OnMapReadyCallback,
         roundTile.setText(String.valueOf(marker.getTitle().charAt(0)));
 
         return info;
+    }
+
+    @Override
+    public boolean onClusterClick(Cluster<ClusterModel> cluster) {
+
+        LatLngBounds.Builder builder = LatLngBounds.builder();
+
+        for (ClusterModel item : cluster.getItems()) {
+            LatLng venuePosition = item.getPosition();
+            builder.include(venuePosition);
+        }
+
+        final LatLngBounds bounds = builder.build();
+
+        try {
+            mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds,200));
+        } catch (Exception error) {
+            Log.e("Cluster Click",error.getMessage());
+        }
+
+        return true;
+    }
+
+    @Override
+    public void onClusterItemInfoWindowClick(ClusterModel clusterModel) {
+
+        if (!isConnected){
+            showSnackMessage(INTERNET_ERROR);
+            return;
+        }
+
+        String placeId = clusterModel.getPlaceId();
+        Intent detailIntent = new Intent(getActivity(), InfoActivity.class);
+        detailIntent.putExtra("placeId", placeId);
+        startActivity(detailIntent);
     }
 }

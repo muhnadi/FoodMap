@@ -402,7 +402,6 @@ public class MainFragment extends Fragment implements GoogleApiClient.Connection
                 return true;
             case R.id.refresh:
                 bottomNavigationState = 1;
-                AppData.lattitude = AppData.longitude = null;
                 AppData.placeModels.clear();
                 askForGPS();
                 return true;
