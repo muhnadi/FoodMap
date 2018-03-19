@@ -3,8 +3,9 @@ package com.nerdgeeks.foodmap.model;
 import android.support.v4.app.Fragment;
 
 /**
- * Created by hp on 12/5/2016.
+ * Created by TAOHID on 3/19/2018.
  */
+
 public class TabsItem {
     private final Fragment mFragment;
 

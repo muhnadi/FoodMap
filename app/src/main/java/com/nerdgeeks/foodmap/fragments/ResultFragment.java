@@ -19,14 +19,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-
 import com.nerdgeeks.foodmap.adapter.GMapsAdapterWithAds;
 import com.nerdgeeks.foodmap.app.AppData;
 import com.nerdgeeks.foodmap.model.PlaceModel;
 import com.nerdgeeks.foodmap.view.OnItemClickListener;
 import com.nerdgeeks.foodmap.R;
 import com.nerdgeeks.foodmap.activities.InfoActivity;
-import com.nerdgeeks.foodmap.adapter.GMapsAdapter;
 import com.nerdgeeks.foodmap.app.PrefManager;
 import com.nerdgeeks.foodmap.helper.ConnectivityReceiver;
 import java.util.ArrayList;

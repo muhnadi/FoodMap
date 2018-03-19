@@ -1,12 +1,11 @@
 package com.nerdgeeks.foodmap.app;
 
 /**
- * Created by hp on 11/18/2016.
+ * Created by TAOHID on 3/19/2018.
  */
 
 import android.app.Application;
 import com.nerdgeeks.foodmap.helper.ConnectivityReceiver;
-
 
 
 public class AppController extends Application {

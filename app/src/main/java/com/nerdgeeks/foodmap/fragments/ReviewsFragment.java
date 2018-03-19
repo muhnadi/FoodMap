@@ -9,12 +9,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-import android.widget.Toast;
-
 import com.nerdgeeks.foodmap.R;
 import com.nerdgeeks.foodmap.adapter.ReviewsAdapter;
 import com.nerdgeeks.foodmap.app.AppData;
-import com.nerdgeeks.foodmap.model.PlaceDetails;
 import com.nerdgeeks.foodmap.model.Review;
 
 import java.util.ArrayList;

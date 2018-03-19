@@ -35,8 +35,11 @@ import java.util.List;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
-
 import static com.nerdgeeks.foodmap.app.AppConfig.TAG;
+
+/**
+ * Created by TAOHID on 3/19/2018.
+ */
 
 /**
  * A simple {@link Fragment} subclass.

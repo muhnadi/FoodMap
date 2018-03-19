@@ -64,6 +64,10 @@ import java.util.List;
 import java.util.Locale;
 import static android.content.Context.INPUT_METHOD_SERVICE;
 
+/**
+ * Created by TAOHID on 3/19/2018.
+ */
+
 public class MainFragment extends Fragment implements GoogleApiClient.ConnectionCallbacks {
 
     private static final LatLngBounds LAT_LNG_BOUNDS = new LatLngBounds(

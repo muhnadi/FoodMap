@@ -4,7 +4,6 @@ import com.nerdgeeks.foodmap.model.DistanceTime;
 import com.nerdgeeks.foodmap.model.PlaceDetails;
 import com.nerdgeeks.foodmap.model.PlaceModel;
 import com.nerdgeeks.foodmap.model.Route;
-
 import java.util.ArrayList;
 
 /**
@@ -20,6 +19,5 @@ public class AppData {
     public static PlaceDetails placeDetails;
     public static ArrayList<DistanceTime> distanceTimes;
     public static ArrayList<Route> routeArrayList;
-
 
 }

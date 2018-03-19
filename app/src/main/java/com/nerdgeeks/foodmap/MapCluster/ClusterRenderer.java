@@ -6,6 +6,10 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.maps.android.clustering.ClusterManager;
 import com.google.maps.android.clustering.view.DefaultClusterRenderer;
 
+/**
+ * Created by TAOHID on 3/19/2018.
+ */
+
 public class ClusterRenderer extends DefaultClusterRenderer<ClusterModel> {
 
     public ClusterRenderer(Context context, GoogleMap map, ClusterManager<ClusterModel> clusterManager) {
