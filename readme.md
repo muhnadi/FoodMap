@@ -26,8 +26,8 @@ Using Food Map you can also see routes, distance and walk time to go restaurants
 
 NB: If you find any trouble getting results make sure your GPS is enabled and then just refresh the activity
 
-<img src="https://lh3.googleusercontent.com/ezFHkAMBsdiENWGXa4Ueu-HuVKYYei-_3fcEzey8fLPsLnnJds1kZgVWRGhJjgsjx-o=w1366-h631">
-<img src="https://lh3.googleusercontent.com/vs-im80CAGuIW6N6gWrIZD29-Q22OvaGYBmgWW1DM40nGTq0FEXAkE3zbiU1jBM_KcA=w1366-h631"> <br>
+<img src="https://lh3.googleusercontent.com/vs-im80CAGuIW6N6gWrIZD29-Q22OvaGYBmgWW1DM40nGTq0FEXAkE3zbiU1jBM_KcA=w1366-h631">
+<img src="https://lh3.googleusercontent.com/ezFHkAMBsdiENWGXa4Ueu-HuVKYYei-_3fcEzey8fLPsLnnJds1kZgVWRGhJjgsjx-o=w1366-h631"> <br>
 ![alt-text-1](https://lh3.googleusercontent.com/sC15ZuoBvHyxcdkiTHJLmQbJwVnBw34_SS0MlSar1xg4hnvQRP_MeUawI-POQ_yAoQLQ=w1366-h631 "Screenshot") 
 ![alt-text-4](https://lh3.googleusercontent.com/Cx9CabbnkTYv4N8C1L0mNd2GAg7IWEsTRj069CnEmwELbKdJgMRjOWGsL5JQUxyZnco=w1366-h631 "Screenshot")
 
