@@ -28,3 +28,31 @@ NB: If you find any trouble getting results make sure your GPS is enabled and th
 
 <img style="float:right" src="https://lh3.googleusercontent.com/sC15ZuoBvHyxcdkiTHJLmQbJwVnBw34_SS0MlSar1xg4hnvQRP_MeUawI-POQ_yAoQLQ=w1366-h631" alt="Food Map">
 <img style="float:left" src="https://lh3.googleusercontent.com/Cx9CabbnkTYv4N8C1L0mNd2GAg7IWEsTRj069CnEmwELbKdJgMRjOWGsL5JQUxyZnco=w1366-h631" alt="Food Map">
+
+<head>
+	<title>
+	</title>
+	<style>
+	.boxes{
+	width:50%;
+	float:left;
+	}
+	#mainDiv{
+		width:50%;
+margin:auto;
+	}
+	img{
+		max-width:100%;
+	}
+</style>
+</head>
+<body>
+<div id="mainDiv">
+    <div id="divOne" class="boxes">
+	<img src="one.jpg">
+    </div>
+    <div id="divTwo" class="boxes">
+	<img src="two.jpg">
+    </div>
+</div>
+</body>
