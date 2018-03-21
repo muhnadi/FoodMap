@@ -26,7 +26,5 @@ Using Food Map you can also see routes, distance and walk time to go restaurants
 
 NB: If you find any trouble getting results make sure your GPS is enabled and then just refresh the activity
 
-<img style="float:right" src="https://lh3.googleusercontent.com/sC15ZuoBvHyxcdkiTHJLmQbJwVnBw34_SS0MlSar1xg4hnvQRP_MeUawI-POQ_yAoQLQ=w1366-h631" alt="Food Map">
-<img style="float:left" src="https://lh3.googleusercontent.com/Cx9CabbnkTYv4N8C1L0mNd2GAg7IWEsTRj069CnEmwELbKdJgMRjOWGsL5JQUxyZnco=w1366-h631" alt="Food Map">
-
-![alt-text-1](https://lh3.googleusercontent.com/sC15ZuoBvHyxcdkiTHJLmQbJwVnBw34_SS0MlSar1xg4hnvQRP_MeUawI-POQ_yAoQLQ=w1366-h631 "title-1") ![alt-text-2](https://lh3.googleusercontent.com/Cx9CabbnkTYv4N8C1L0mNd2GAg7IWEsTRj069CnEmwELbKdJgMRjOWGsL5JQUxyZnco=w1366-h631 "title-2")
+![alt-text-1](https://lh3.googleusercontent.com/sC15ZuoBvHyxcdkiTHJLmQbJwVnBw34_SS0MlSar1xg4hnvQRP_MeUawI-POQ_yAoQLQ=w1366-h631 "Screenshot") 
+![alt-text-2](https://lh3.googleusercontent.com/Cx9CabbnkTYv4N8C1L0mNd2GAg7IWEsTRj069CnEmwELbKdJgMRjOWGsL5JQUxyZnco=w1366-h631 "Screenshot")
