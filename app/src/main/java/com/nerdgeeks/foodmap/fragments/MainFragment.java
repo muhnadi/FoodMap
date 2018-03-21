@@ -407,15 +407,10 @@ public class MainFragment extends Fragment implements GoogleApiClient.Connection
                     if (places.getStatus().isSuccess()) {
                         final Place myPlace = places.get(0);
                         LatLng queriedLocation = myPlace.getLatLng();
-
-                        bottomNavigationState = 1;
                         AppData.lattitude = queriedLocation.latitude;
                         AppData.longitude = queriedLocation.longitude;
-                        AppData.placeModels.clear();
 
-                        // clear the fragment manager stack
-                        getChildFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
-                        loadFirstTime();
+                        refreshData();
                     }
                     places.release();
                 });
@@ -428,15 +423,21 @@ public class MainFragment extends Fragment implements GoogleApiClient.Connection
             case R.id.menu_search:
                 return true;
             case R.id.refresh:
-                bottomNavigationState = 1;
-                AppData.placeModels.clear();
-                askForGPS();
+                refreshData();
                 return true;
             case R.id.cached:
                 deleteCache(mContext);
             default:
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    private void refreshData(){
+        // clear the fragment manager stack
+        getChildFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+        bottomNavigationState = 1;
+        AppData.placeModels.clear();
+        askForGPS();
     }
 
     public void deleteCache(Context context) {

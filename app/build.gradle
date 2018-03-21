@@ -14,8 +14,8 @@ android {
         applicationId "com.nerdgeeks.foodmap"
         minSdkVersion 14
         targetSdkVersion 27
-        versionCode 18
-        versionName "3.1"
+        versionCode 19
+        versionName "3.2"
         signingConfig signingConfigs.config
     }
     buildTypes {
