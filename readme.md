@@ -1,4 +1,4 @@
-# FoodMap  &emsp; &emsp; <a href="https://play.google.com/store/apps/details?id=com.nerdgeeks.foodmap&hl=en">Available on Google Play Store</a>
+# FoodMap  &emsp; &emsp; <a target="_blank" href="https://play.google.com/store/apps/details?id=com.nerdgeeks.foodmap&hl=en">Available on Google Play Store</a>
 Feeling Hungry! But don't know your nearby food court, bars or restaurants around you?
 
 The Food Map is for locating restaurant or food court near your local area using Google Maps. Just open the app, Turn on your mobile internet or WiFi and location and then the app will automatically search for your nearest location restaurants, bars, cafes, grocery shop.
