@@ -166,9 +166,9 @@ public class MapsActivity extends AppCompatActivity {
                             aboutMyApp();
                         } else if (drawerItem.getIdentifier() == 8) {
                             AppData.lattitude = AppData.longitude = null;
-                            drawer.setSelection(1);
                             drawer.updateName(7,new StringHolder("Current Location"));
                             drawer.updateName(8,new StringHolder(""));
+                            drawer.setSelection(1);
                         }
                     }
                     return false;

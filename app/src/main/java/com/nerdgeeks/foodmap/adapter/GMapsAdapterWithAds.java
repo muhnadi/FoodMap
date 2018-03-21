@@ -160,10 +160,9 @@ public class GMapsAdapterWithAds extends RecyclerView.Adapter<RecyclerView.ViewH
 
     @Override
     public int getItemViewType(int position) {
-        if (position % 5 == 1) {
+        if (position % 7 == 0) {
             return AD_TYPE;
-        }
-        else {
+        } else {
             return POST_TYPE;
         }
     }

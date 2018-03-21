@@ -98,20 +98,19 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, GoogleM
 
         BitmapDrawable bitmapdraw = (BitmapDrawable)getResources().getDrawable(R.drawable.ic_marker);
         Bitmap bitmap = bitmapdraw.getBitmap();
-        smallMarker = Bitmap.createScaledBitmap(bitmap, bitmap.getWidth()/2,bitmap.getHeight()/2, false);
+        smallMarker = Bitmap.createScaledBitmap(bitmap, (bitmap.getWidth()/2)+20,(bitmap.getHeight()/2)+20, false);
 
         placeDetails = AppData.placeDetails;
         distanceTime = AppData.distanceTimes;
 
-        RestaurantMap(gMap);
+        RestaurantMap();
     }
 
 
-    private void RestaurantMap(final GoogleMap mMap){
-        gMap = mMap;
+    private void RestaurantMap(){
 
-        double srcLat = AppData.lattitude;
-        double srcLng = AppData.longitude;
+        double srcLat = AppData.currentLattitude;
+        double srcLng = AppData.currentLongitude;
 
         String name = placeDetails.getName();
         double destLat = placeDetails.getGeometry().getLocation().getLat();
@@ -125,7 +124,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, GoogleM
         desMarker.setIcon(BitmapDescriptorFactory.fromBitmap(smallMarker));
         desMarker.showInfoWindow();
 
-        gMap.animateCamera(CameraUpdateFactory.zoomTo(17));
+        gMap.animateCamera(CameraUpdateFactory.zoomTo(16));
 
         getRoutes(new LatLng(srcLat,srcLng), new LatLng(destLat,destLng));
     }
@@ -163,9 +162,13 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, GoogleM
                     gMap.addPolyline(new PolylineOptions().geodesic(true).addAll(routeLatLng).width(10).color(Color.RED).geodesic(true));
                 }
 
+                int width = getResources().getDisplayMetrics().widthPixels;
+                int height = getResources().getDisplayMetrics().heightPixels;
+                int padding = (int) (width * 0.20); // offset from edges of the map 20% of screen
+
                 LatLngBounds latLngBounds = adjustBoundsForMaxZoomLevel(bounds);
                 if (latLngBounds!= null)
-                    gMap.moveCamera(CameraUpdateFactory.newLatLngBounds(latLngBounds, 50));
+                    gMap.moveCamera(CameraUpdateFactory.newLatLngBounds(latLngBounds,padding));
             }
 
             @Override

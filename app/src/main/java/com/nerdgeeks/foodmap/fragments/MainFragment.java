@@ -1,9 +1,7 @@
 package com.nerdgeeks.foodmap.fragments;
 
 import android.Manifest;
-import android.app.Activity;
-import android.app.ProgressDialog;
-import android.app.SearchManager;
+import android.app.*;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
@@ -19,7 +17,9 @@ import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.BottomNavigationView;
-import android.support.v4.app.*;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.widget.SearchView;
@@ -70,14 +70,17 @@ import static android.content.Context.INPUT_METHOD_SERVICE;
 
 public class MainFragment extends Fragment implements GoogleApiClient.ConnectionCallbacks {
 
+    private String NearbyFragmentTag = "MAP";
+    private String ResultFragmentTag = "RESULT";
+    private FragmentTransaction mTransaction;
+
+
     private static final LatLngBounds LAT_LNG_BOUNDS = new LatLngBounds(
             new LatLng(-40, -168), new LatLng(71, 136));
     private CharacterStyle STYLE_BOLD = new StyleSpan(Typeface.BOLD);
     public static PlaceAutocompleteAdapter placesAutoCompleteAdapter;
 
     private FusedLocationProviderClient mFusedLocationClient;
-    private Location mCurrentLocation;
-    boolean gps_enabled = false;
     GoogleApiClient client;
     LocationRequest mLocationRequest;
     PendingResult<LocationSettingsResult> result;
@@ -128,8 +131,6 @@ public class MainFragment extends Fragment implements GoogleApiClient.Connection
         client.connect();
     }
 
-
-
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -161,6 +162,7 @@ public class MainFragment extends Fragment implements GoogleApiClient.Connection
 
         BottomNavigationView navigation = rootView.findViewById(R.id.navigation);
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
+
         return rootView;
     }
 
@@ -235,8 +237,8 @@ public class MainFragment extends Fragment implements GoogleApiClient.Connection
         if (AppData.longitude == null && AppData.longitude == null) {
             mFusedLocationClient.requestLocationUpdates(mLocationRequest, mLocationCallback, Looper.myLooper());
         } else {
-            setHasOptionsMenu(true);
-            loadFragment(NearbyFragment.newInstance(mParam1));
+            // Default show nearby map fragment
+            loadFragment();
         }
     }
 
@@ -244,12 +246,12 @@ public class MainFragment extends Fragment implements GoogleApiClient.Connection
         @Override
         public void onLocationResult(LocationResult locationResult) {
 
-            mCurrentLocation = locationResult.getLastLocation();
-            AppData.lattitude = mCurrentLocation.getLatitude();
-            AppData.longitude = mCurrentLocation.getLongitude();
-            setHasOptionsMenu(true);
+            Location mCurrentLocation = locationResult.getLastLocation();
+            AppData.lattitude = AppData.currentLattitude = mCurrentLocation.getLatitude();
+            AppData.longitude = AppData.currentLongitude =  mCurrentLocation.getLongitude();
+
             // Default show nearby map fragment
-            loadFragment(NearbyFragment.newInstance(mParam1));
+            loadFragment();
 
             if (mFusedLocationClient != null) {
                 mFusedLocationClient.removeLocationUpdates(mLocationCallback);
@@ -262,20 +264,35 @@ public class MainFragment extends Fragment implements GoogleApiClient.Connection
 
         @Override
         public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-            Fragment mFragment;
+            Fragment nearbyFragment = getChildFragmentManager().findFragmentByTag(NearbyFragmentTag);
+            Fragment resultFragment = getChildFragmentManager().findFragmentByTag(ResultFragmentTag);
+            mTransaction = getChildFragmentManager().beginTransaction();
+
             switch (item.getItemId()) {
                 case R.id.map:
+
                     if (bottomNavigationState == 0){
-                        mFragment = NearbyFragment.newInstance(mParam1);
-                        loadFragment(mFragment);
+                        mTransaction.hide(resultFragment);
+                        mTransaction.show(nearbyFragment);
+                        mTransaction.commit();
                     }
+
                     bottomNavigationState = 1;
                     return true;
                 case R.id.list:
+
                     if (bottomNavigationState == 1){
-                        mFragment = ResultFragment.newInstance(mParam1);
-                        loadFragment(mFragment);
+                        Fragment mFragment = ResultFragment.newInstance(mParam1);
+                        mTransaction.hide(nearbyFragment);
+                        if (resultFragment != null){
+                            mTransaction.show(resultFragment);
+                        } else {
+                            mTransaction.add(R.id.frame_container, mFragment,ResultFragmentTag);
+                            mTransaction.addToBackStack(null);
+                        }
+                        mTransaction.commit();
                     }
+
                     bottomNavigationState = 0;
                     return true;
             }
@@ -283,9 +300,11 @@ public class MainFragment extends Fragment implements GoogleApiClient.Connection
         }
     };
 
-    private void loadFragment(Fragment mFragment){
-        FragmentTransaction mTransaction = getChildFragmentManager().beginTransaction();
-        mTransaction.replace(R.id.frame_container, mFragment);
+    private void loadFragment() {
+        setHasOptionsMenu(true);
+        Fragment mFragment = NearbyFragment.newInstance(mParam1);
+        mTransaction = getChildFragmentManager().beginTransaction();
+        mTransaction.add(R.id.frame_container, mFragment,NearbyFragmentTag);
         mTransaction.addToBackStack(null);
         mTransaction.commit();
     }
@@ -388,11 +407,15 @@ public class MainFragment extends Fragment implements GoogleApiClient.Connection
                     if (places.getStatus().isSuccess()) {
                         final Place myPlace = places.get(0);
                         LatLng queriedLocation = myPlace.getLatLng();
+
+                        bottomNavigationState = 1;
                         AppData.lattitude = queriedLocation.latitude;
                         AppData.longitude = queriedLocation.longitude;
                         AppData.placeModels.clear();
+
+                        // clear the fragment manager stack
+                        getChildFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
                         loadFirstTime();
-                        bottomNavigationState = 1;
                     }
                     places.release();
                 });

@@ -15,6 +15,8 @@ public class AppData {
     public static ArrayList<PlaceModel> placeModels = new ArrayList<>();
     public static Double lattitude;
     public static Double longitude;
+    public static Double currentLattitude;
+    public static Double currentLongitude;
 
     public static PlaceDetails placeDetails;
     public static ArrayList<DistanceTime> distanceTimes;

@@ -93,6 +93,7 @@ public class NearbyFragment extends Fragment implements OnMapReadyCallback,
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setRetainInstance(true);
         if (getArguments() != null) {
             type = getArguments().getString(ARG_PARAM1);
         }
@@ -229,13 +230,13 @@ public class NearbyFragment extends Fragment implements OnMapReadyCallback,
                 ArrayList<PlaceModel> nextPlaceModels = response.body().getResults();
                 placeModels.addAll(nextPlaceModels);
 
-                //show the data into map
-                showDataIntoMap(placeModels);
-
                 // Store the data for offline uses
                 prefManager.storeData(placeModels,type);
                 // set this data to static Arraylist so that we can use it in our whole app
                 AppData.placeModels = placeModels;
+
+                //show the data into map
+                showDataIntoMap(placeModels);
             }
 
             @Override
@@ -249,6 +250,14 @@ public class NearbyFragment extends Fragment implements OnMapReadyCallback,
     }
 
     private void showDataIntoMap(ArrayList<PlaceModel> placeModels) {
+
+        //zoom to current position:
+        CameraPosition cameraPosition = new CameraPosition.Builder()
+                .target(new LatLng(lat,lng))
+                .zoom(16)
+                .bearing(30)
+                .build();
+        mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
 
         for (PlaceModel placeModel: placeModels) {
 
@@ -266,14 +275,13 @@ public class NearbyFragment extends Fragment implements OnMapReadyCallback,
 
         mClusterManager.cluster();
 
-        //zoom to current position:
-        CameraPosition cameraPosition = new CameraPosition.Builder()
-                .target(new LatLng(lat,lng))
-                .zoom(16)
-                .bearing(30)
-                .build();
-        mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
         pDialog.dismiss();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        mapView.onPause();
     }
 
     @Override

@@ -291,7 +291,7 @@ public class InfoActivity extends AppCompatActivity implements MaterialTabListen
 
                     double lat = placeDetails.getGeometry().getLocation().getLat();
                     double lng = placeDetails.getGeometry().getLocation().getLng();
-                    loadDistanceTime(new LatLng(latitude,longitude),new LatLng(lat,lng));
+                    loadDistanceTime(new LatLng(lat,lng));
 
                 } else {
                     Toast.makeText(InfoActivity.this, "No Information found!!!", Toast.LENGTH_SHORT).show();
@@ -308,9 +308,9 @@ public class InfoActivity extends AppCompatActivity implements MaterialTabListen
         });
     }
 
-    private void loadDistanceTime(LatLng origin, LatLng dest) {
+    private void loadDistanceTime(LatLng dest) {
 
-        String origing = origin.latitude+","+origin.longitude;
+        String origing = AppData.currentLattitude+","+AppData.currentLongitude;
         String destination = dest.latitude+","+dest.longitude;
 
         ApiInterface apiInterface = ApiClient.getClient().create(ApiInterface.class);
@@ -320,7 +320,6 @@ public class InfoActivity extends AppCompatActivity implements MaterialTabListen
             public void onResponse(@NonNull Call<DistanceTimeCall> call, @NonNull Response<DistanceTimeCall> response) {
 
                 ArrayList<DistanceTime> distanceTimes = response.body().getRows();
-
                 AppData.distanceTimes = distanceTimes;
 
                 for (DistanceTime distanceTime: distanceTimes){
