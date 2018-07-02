@@ -1,14 +1,6 @@
 apply plugin: 'com.android.application'
 
 android {
-    signingConfigs {
-        config {
-            keyAlias 'taohid'
-            keyPassword 'diya4112'
-            storeFile file('C:/Android/android_key_for_signed_apk.jks')
-            storePassword 'diya4112'
-        }
-    }
     compileSdkVersion 27
     defaultConfig {
         applicationId "com.nerdgeeks.foodmap"
